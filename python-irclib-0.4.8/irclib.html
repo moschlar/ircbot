@@ -1,0 +1,904 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module irclib</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>irclib</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/Users/moschlar/Documents/ircbot/python-irclib-0.4.8/irclib.py">/Users/moschlar/Documents/ircbot/python-irclib-0.4.8/irclib.py</a></font></td></tr></table>
+    <p><tt>irclib&nbsp;--&nbsp;Internet&nbsp;Relay&nbsp;Chat&nbsp;(<a href="#IRC">IRC</a>)&nbsp;protocol&nbsp;client&nbsp;library.<br>
+&nbsp;<br>
+This&nbsp;library&nbsp;is&nbsp;intended&nbsp;to&nbsp;encapsulate&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;protocol&nbsp;at&nbsp;a&nbsp;quite<br>
+low&nbsp;level.&nbsp;&nbsp;It&nbsp;provides&nbsp;an&nbsp;event-driven&nbsp;<a href="#IRC">IRC</a>&nbsp;client&nbsp;framework.&nbsp;&nbsp;It&nbsp;has<br>
+a&nbsp;fairly&nbsp;thorough&nbsp;support&nbsp;for&nbsp;the&nbsp;basic&nbsp;<a href="#IRC">IRC</a>&nbsp;protocol,&nbsp;CTCP,&nbsp;DCC&nbsp;chat,<br>
+but&nbsp;DCC&nbsp;file&nbsp;transfers&nbsp;is&nbsp;not&nbsp;yet&nbsp;supported.<br>
+&nbsp;<br>
+In&nbsp;order&nbsp;to&nbsp;understand&nbsp;how&nbsp;to&nbsp;make&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;client,&nbsp;I'm&nbsp;afraid&nbsp;you&nbsp;more<br>
+or&nbsp;less&nbsp;must&nbsp;understand&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;specifications.&nbsp;&nbsp;They&nbsp;are&nbsp;available<br>
+here:&nbsp;[<a href="#IRC">IRC</a>&nbsp;specifications].<br>
+&nbsp;<br>
+The&nbsp;main&nbsp;features&nbsp;of&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;client&nbsp;framework&nbsp;are:<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;Abstraction&nbsp;of&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;protocol.<br>
+&nbsp;&nbsp;*&nbsp;Handles&nbsp;multiple&nbsp;simultaneous&nbsp;<a href="#IRC">IRC</a>&nbsp;server&nbsp;connections.<br>
+&nbsp;&nbsp;*&nbsp;Handles&nbsp;server&nbsp;PONGing&nbsp;transparently.<br>
+&nbsp;&nbsp;*&nbsp;Messages&nbsp;to&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;server&nbsp;are&nbsp;done&nbsp;by&nbsp;calling&nbsp;methods&nbsp;on&nbsp;an&nbsp;<a href="#IRC">IRC</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;connection&nbsp;object.<br>
+&nbsp;&nbsp;*&nbsp;Messages&nbsp;from&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;server&nbsp;triggers&nbsp;events,&nbsp;which&nbsp;can&nbsp;be&nbsp;caught<br>
+&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;event&nbsp;handlers.<br>
+&nbsp;&nbsp;*&nbsp;Reading&nbsp;from&nbsp;and&nbsp;writing&nbsp;to&nbsp;<a href="#IRC">IRC</a>&nbsp;server&nbsp;sockets&nbsp;are&nbsp;normally&nbsp;done<br>
+&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;an&nbsp;internal&nbsp;select()&nbsp;loop,&nbsp;but&nbsp;the&nbsp;select()ing&nbsp;may&nbsp;be&nbsp;done&nbsp;by<br>
+&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;external&nbsp;main&nbsp;loop.<br>
+&nbsp;&nbsp;*&nbsp;Functions&nbsp;can&nbsp;be&nbsp;registered&nbsp;to&nbsp;execute&nbsp;at&nbsp;specified&nbsp;times&nbsp;by&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;event-loop.<br>
+&nbsp;&nbsp;*&nbsp;Decodes&nbsp;CTCP&nbsp;tagging&nbsp;correctly&nbsp;(hopefully);&nbsp;I&nbsp;haven't&nbsp;seen&nbsp;any<br>
+&nbsp;&nbsp;&nbsp;&nbsp;other&nbsp;<a href="#IRC">IRC</a>&nbsp;client&nbsp;implementation&nbsp;that&nbsp;handles&nbsp;the&nbsp;CTCP<br>
+&nbsp;&nbsp;&nbsp;&nbsp;specification&nbsp;subtilties.<br>
+&nbsp;&nbsp;*&nbsp;A&nbsp;kind&nbsp;of&nbsp;simple,&nbsp;single-server,&nbsp;object-oriented&nbsp;<a href="#IRC">IRC</a>&nbsp;client&nbsp;class<br>
+&nbsp;&nbsp;&nbsp;&nbsp;that&nbsp;dispatches&nbsp;events&nbsp;to&nbsp;instance&nbsp;methods&nbsp;is&nbsp;included.<br>
+&nbsp;<br>
+Current&nbsp;limitations:<br>
+&nbsp;<br>
+&nbsp;&nbsp;*&nbsp;The&nbsp;<a href="#IRC">IRC</a>&nbsp;protocol&nbsp;shines&nbsp;through&nbsp;the&nbsp;abstraction&nbsp;a&nbsp;bit&nbsp;too&nbsp;much.<br>
+&nbsp;&nbsp;*&nbsp;Data&nbsp;is&nbsp;not&nbsp;written&nbsp;asynchronously&nbsp;to&nbsp;the&nbsp;server,&nbsp;i.e.&nbsp;the&nbsp;write()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;may&nbsp;block&nbsp;if&nbsp;the&nbsp;TCP&nbsp;buffers&nbsp;are&nbsp;stuffed.<br>
+&nbsp;&nbsp;*&nbsp;There&nbsp;are&nbsp;no&nbsp;support&nbsp;for&nbsp;DCC&nbsp;file&nbsp;transfers.<br>
+&nbsp;&nbsp;*&nbsp;The&nbsp;author&nbsp;haven't&nbsp;even&nbsp;read&nbsp;<a href="http://www.rfc-editor.org/rfc/rfc2810.txt">RFC&nbsp;2810</a>,&nbsp;2811,&nbsp;2812&nbsp;and&nbsp;2813.<br>
+&nbsp;&nbsp;*&nbsp;Like&nbsp;most&nbsp;projects,&nbsp;documentation&nbsp;is&nbsp;lacking...<br>
+&nbsp;<br>
+..&nbsp;[<a href="#IRC">IRC</a>&nbsp;specifications]&nbsp;<a href="http://www.irchelp.org/irchelp/rfc/">http://www.irchelp.org/irchelp/rfc/</a></tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="bisect.html">bisect</a><br>
+<a href="re.html">re</a><br>
+</td><td width="25%" valign=top><a href="select.html">select</a><br>
+<a href="socket.html">socket</a><br>
+</td><td width="25%" valign=top><a href="string.html">string</a><br>
+<a href="sys.html">sys</a><br>
+</td><td width="25%" valign=top><a href="time.html">time</a><br>
+<a href="types.html">types</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="exceptions.html#Exception">exceptions.Exception</a>(<a href="exceptions.html#BaseException">exceptions.BaseException</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="irclib.html#IRCError">IRCError</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="irclib.html#DCCConnectionError">DCCConnectionError</a>
+</font></dt><dt><font face="helvetica, arial"><a href="irclib.html#ServerConnectionError">ServerConnectionError</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="irclib.html#ServerNotConnectedError">ServerNotConnectedError</a>
+</font></dt></dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="irclib.html#Connection">Connection</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="irclib.html#DCCConnection">DCCConnection</a>
+</font></dt><dt><font face="helvetica, arial"><a href="irclib.html#ServerConnection">ServerConnection</a>
+</font></dt></dl>
+</dd>
+<dt><font face="helvetica, arial"><a href="irclib.html#Event">Event</a>
+</font></dt><dt><font face="helvetica, arial"><a href="irclib.html#IRC">IRC</a>
+</font></dt><dt><font face="helvetica, arial"><a href="irclib.html#SimpleIRCClient">SimpleIRCClient</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Connection">class <strong>Connection</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Base&nbsp;class&nbsp;for&nbsp;<a href="#IRC">IRC</a>&nbsp;connections.<br>
+&nbsp;<br>
+Must&nbsp;be&nbsp;overridden.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Connection-__init__"><strong>__init__</strong></a>(self, irclibobj)</dt></dl>
+
+<dl><dt><a name="Connection-execute_at"><strong>execute_at</strong></a>(self, at, function, arguments<font color="#909090">=()</font>)</dt></dl>
+
+<dl><dt><a name="Connection-execute_delayed"><strong>execute_delayed</strong></a>(self, delay, function, arguments<font color="#909090">=()</font>)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="DCCConnection">class <strong>DCCConnection</strong></a>(<a href="irclib.html#Connection">Connection</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>This&nbsp;class&nbsp;represents&nbsp;a&nbsp;DCC&nbsp;connection.<br>
+&nbsp;<br>
+<a href="#DCCConnection">DCCConnection</a>&nbsp;objects&nbsp;are&nbsp;instantiated&nbsp;by&nbsp;calling&nbsp;the&nbsp;dcc<br>
+method&nbsp;on&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;object.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="DCCConnection-__init__"><strong>__init__</strong></a>(self, irclibobj, dcctype)</dt></dl>
+
+<dl><dt><a name="DCCConnection-connect"><strong>connect</strong></a>(self, address, port)</dt><dd><tt>Connect/reconnect&nbsp;to&nbsp;a&nbsp;DCC&nbsp;peer.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;address&nbsp;--&nbsp;Host/IP&nbsp;address&nbsp;of&nbsp;the&nbsp;peer.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port&nbsp;--&nbsp;The&nbsp;port&nbsp;number&nbsp;to&nbsp;connect&nbsp;to.<br>
+&nbsp;<br>
+Returns&nbsp;the&nbsp;<a href="#DCCConnection">DCCConnection</a>&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="DCCConnection-disconnect"><strong>disconnect</strong></a>(self, message<font color="#909090">=''</font>)</dt><dd><tt>Hang&nbsp;up&nbsp;the&nbsp;connection&nbsp;and&nbsp;close&nbsp;the&nbsp;object.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;--&nbsp;Quit&nbsp;message.</tt></dd></dl>
+
+<dl><dt><a name="DCCConnection-listen"><strong>listen</strong></a>(self)</dt><dd><tt>Wait&nbsp;for&nbsp;a&nbsp;connection/reconnection&nbsp;from&nbsp;a&nbsp;DCC&nbsp;peer.<br>
+&nbsp;<br>
+Returns&nbsp;the&nbsp;<a href="#DCCConnection">DCCConnection</a>&nbsp;object.<br>
+&nbsp;<br>
+The&nbsp;local&nbsp;IP&nbsp;address&nbsp;and&nbsp;port&nbsp;are&nbsp;available&nbsp;as<br>
+self.<strong>localaddress</strong>&nbsp;and&nbsp;self.<strong>localport</strong>.&nbsp;&nbsp;After&nbsp;connection&nbsp;from&nbsp;a<br>
+peer,&nbsp;the&nbsp;peer&nbsp;address&nbsp;and&nbsp;port&nbsp;are&nbsp;available&nbsp;as<br>
+self.<strong>peeraddress</strong>&nbsp;and&nbsp;self.<strong>peerport</strong>.</tt></dd></dl>
+
+<dl><dt><a name="DCCConnection-privmsg"><strong>privmsg</strong></a>(self, string)</dt><dd><tt>Send&nbsp;data&nbsp;to&nbsp;DCC&nbsp;peer.<br>
+&nbsp;<br>
+The&nbsp;string&nbsp;will&nbsp;be&nbsp;padded&nbsp;with&nbsp;appropriate&nbsp;LF&nbsp;if&nbsp;it's&nbsp;a&nbsp;DCC<br>
+CHAT&nbsp;session.</tt></dd></dl>
+
+<dl><dt><a name="DCCConnection-process_data"><strong>process_data</strong></a>(self)</dt><dd><tt>[Internal]</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="irclib.html#Connection">Connection</a>:<br>
+<dl><dt><a name="DCCConnection-execute_at"><strong>execute_at</strong></a>(self, at, function, arguments<font color="#909090">=()</font>)</dt></dl>
+
+<dl><dt><a name="DCCConnection-execute_delayed"><strong>execute_delayed</strong></a>(self, delay, function, arguments<font color="#909090">=()</font>)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="DCCConnectionError">class <strong>DCCConnectionError</strong></a>(<a href="irclib.html#IRCError">IRCError</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="irclib.html#DCCConnectionError">DCCConnectionError</a></dd>
+<dd><a href="irclib.html#IRCError">IRCError</a></dd>
+<dd><a href="exceptions.html#Exception">exceptions.Exception</a></dd>
+<dd><a href="exceptions.html#BaseException">exceptions.BaseException</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Data descriptors inherited from <a href="irclib.html#IRCError">IRCError</a>:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><a name="DCCConnectionError-__init__"><strong>__init__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__init__">__init__</a>(...)&nbsp;initializes&nbsp;x;&nbsp;see&nbsp;x.__class__.__doc__&nbsp;for&nbsp;signature</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#DCCConnectionError-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<hr>
+Methods inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><a name="DCCConnectionError-__delattr__"><strong>__delattr__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__delattr__">__delattr__</a>('name')&nbsp;&lt;==&gt;&nbsp;del&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="DCCConnectionError-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="DCCConnectionError-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="DCCConnectionError-__getslice__"><strong>__getslice__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__getslice__">__getslice__</a>(i,&nbsp;j)&nbsp;&lt;==&gt;&nbsp;x[i:j]<br>
+&nbsp;<br>
+Use&nbsp;of&nbsp;negative&nbsp;indices&nbsp;is&nbsp;not&nbsp;supported.</tt></dd></dl>
+
+<dl><dt><a name="DCCConnectionError-__reduce__"><strong>__reduce__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="DCCConnectionError-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="DCCConnectionError-__setattr__"><strong>__setattr__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__setattr__">__setattr__</a>('name',&nbsp;value)&nbsp;&lt;==&gt;&nbsp;x.name&nbsp;=&nbsp;value</tt></dd></dl>
+
+<dl><dt><a name="DCCConnectionError-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="DCCConnectionError-__str__"><strong>__str__</strong></a>(...)</dt><dd><tt>x.<a href="#DCCConnectionError-__str__">__str__</a>()&nbsp;&lt;==&gt;&nbsp;str(x)</tt></dd></dl>
+
+<dl><dt><a name="DCCConnectionError-__unicode__"><strong>__unicode__</strong></a>(...)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+<dl><dt><strong>message</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Event">class <strong>Event</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;representing&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;event.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Event-__init__"><strong>__init__</strong></a>(self, eventtype, source, target, arguments<font color="#909090">=None</font>)</dt><dd><tt>Constructor&nbsp;of&nbsp;<a href="#Event">Event</a>&nbsp;objects.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;eventtype&nbsp;--&nbsp;A&nbsp;string&nbsp;describing&nbsp;the&nbsp;event.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;source&nbsp;--&nbsp;The&nbsp;originator&nbsp;of&nbsp;the&nbsp;event&nbsp;(a&nbsp;nick&nbsp;mask&nbsp;or&nbsp;a&nbsp;server).<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;target&nbsp;--&nbsp;The&nbsp;target&nbsp;of&nbsp;the&nbsp;event&nbsp;(a&nbsp;nick&nbsp;or&nbsp;a&nbsp;channel).<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;arguments&nbsp;--&nbsp;Any&nbsp;event&nbsp;specific&nbsp;arguments.</tt></dd></dl>
+
+<dl><dt><a name="Event-arguments"><strong>arguments</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;event&nbsp;arguments.</tt></dd></dl>
+
+<dl><dt><a name="Event-eventtype"><strong>eventtype</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;event&nbsp;type.</tt></dd></dl>
+
+<dl><dt><a name="Event-source"><strong>source</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;event&nbsp;source.</tt></dd></dl>
+
+<dl><dt><a name="Event-target"><strong>target</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;event&nbsp;target.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="IRC">class <strong>IRC</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;that&nbsp;handles&nbsp;one&nbsp;or&nbsp;several&nbsp;<a href="#IRC">IRC</a>&nbsp;server&nbsp;connections.<br>
+&nbsp;<br>
+When&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;object&nbsp;has&nbsp;been&nbsp;instantiated,&nbsp;it&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create<br>
+<a href="#Connection">Connection</a>&nbsp;objects&nbsp;that&nbsp;represent&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;connections.&nbsp;&nbsp;The<br>
+responsibility&nbsp;of&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;object&nbsp;is&nbsp;to&nbsp;provide&nbsp;an&nbsp;event-driven<br>
+framework&nbsp;for&nbsp;the&nbsp;connections&nbsp;and&nbsp;to&nbsp;keep&nbsp;the&nbsp;connections&nbsp;alive.<br>
+It&nbsp;runs&nbsp;a&nbsp;select&nbsp;loop&nbsp;to&nbsp;poll&nbsp;each&nbsp;connection's&nbsp;TCP&nbsp;socket&nbsp;and<br>
+hands&nbsp;over&nbsp;the&nbsp;sockets&nbsp;with&nbsp;incoming&nbsp;data&nbsp;for&nbsp;processing&nbsp;by&nbsp;the<br>
+corresponding&nbsp;connection.<br>
+&nbsp;<br>
+The&nbsp;methods&nbsp;of&nbsp;most&nbsp;interest&nbsp;for&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;client&nbsp;writer&nbsp;are&nbsp;server,<br>
+add_global_handler,&nbsp;remove_global_handler,&nbsp;execute_at,<br>
+execute_delayed,&nbsp;process_once&nbsp;and&nbsp;process_forever.<br>
+&nbsp;<br>
+Here&nbsp;is&nbsp;an&nbsp;example:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;irc&nbsp;=&nbsp;irclib.<a href="#IRC">IRC</a>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;server&nbsp;=&nbsp;irc.<a href="#IRC-server">server</a>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;server.connect("irc.some.where",&nbsp;6667,&nbsp;"my_nickname")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;server.privmsg("a_nickname",&nbsp;"Hi&nbsp;there!")<br>
+&nbsp;&nbsp;&nbsp;&nbsp;irc.<a href="#IRC-process_forever">process_forever</a>()<br>
+&nbsp;<br>
+This&nbsp;will&nbsp;connect&nbsp;to&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;server&nbsp;irc.some.where&nbsp;on&nbsp;port&nbsp;6667<br>
+using&nbsp;the&nbsp;nickname&nbsp;my_nickname&nbsp;and&nbsp;send&nbsp;the&nbsp;message&nbsp;"Hi&nbsp;there!"<br>
+to&nbsp;the&nbsp;nickname&nbsp;a_nickname.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="IRC-__init__"><strong>__init__</strong></a>(self, fn_to_add_socket<font color="#909090">=None</font>, fn_to_remove_socket<font color="#909090">=None</font>, fn_to_add_timeout<font color="#909090">=None</font>)</dt><dd><tt>Constructor&nbsp;for&nbsp;<a href="#IRC">IRC</a>&nbsp;objects.<br>
+&nbsp;<br>
+Optional&nbsp;arguments&nbsp;are&nbsp;fn_to_add_socket,&nbsp;fn_to_remove_socket<br>
+and&nbsp;fn_to_add_timeout.&nbsp;&nbsp;The&nbsp;first&nbsp;two&nbsp;specify&nbsp;functions&nbsp;that<br>
+will&nbsp;be&nbsp;called&nbsp;with&nbsp;a&nbsp;socket&nbsp;object&nbsp;as&nbsp;argument&nbsp;when&nbsp;the&nbsp;<a href="#IRC">IRC</a><br>
+object&nbsp;wants&nbsp;to&nbsp;be&nbsp;notified&nbsp;(or&nbsp;stop&nbsp;being&nbsp;notified)&nbsp;of&nbsp;data<br>
+coming&nbsp;on&nbsp;a&nbsp;new&nbsp;socket.&nbsp;&nbsp;When&nbsp;new&nbsp;data&nbsp;arrives,&nbsp;the&nbsp;method<br>
+process_data&nbsp;should&nbsp;be&nbsp;called.&nbsp;&nbsp;Similarly,&nbsp;fn_to_add_timeout<br>
+is&nbsp;called&nbsp;with&nbsp;a&nbsp;number&nbsp;of&nbsp;seconds&nbsp;(a&nbsp;floating&nbsp;point&nbsp;number)<br>
+as&nbsp;first&nbsp;argument&nbsp;when&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;object&nbsp;wants&nbsp;to&nbsp;receive&nbsp;a<br>
+notification&nbsp;(by&nbsp;calling&nbsp;the&nbsp;process_timeout&nbsp;method).&nbsp;&nbsp;So,&nbsp;if<br>
+e.g.&nbsp;the&nbsp;argument&nbsp;is&nbsp;42.17,&nbsp;the&nbsp;object&nbsp;wants&nbsp;the<br>
+process_timeout&nbsp;method&nbsp;to&nbsp;be&nbsp;called&nbsp;after&nbsp;42&nbsp;seconds&nbsp;and&nbsp;170<br>
+milliseconds.<br>
+&nbsp;<br>
+The&nbsp;three&nbsp;arguments&nbsp;mainly&nbsp;exist&nbsp;to&nbsp;be&nbsp;able&nbsp;to&nbsp;use&nbsp;an&nbsp;external<br>
+main&nbsp;loop&nbsp;(for&nbsp;example&nbsp;Tkinter's&nbsp;or&nbsp;PyGTK's&nbsp;main&nbsp;app&nbsp;loop)<br>
+instead&nbsp;of&nbsp;calling&nbsp;the&nbsp;process_forever&nbsp;method.<br>
+&nbsp;<br>
+An&nbsp;alternative&nbsp;is&nbsp;to&nbsp;just&nbsp;call&nbsp;<a href="#ServerConnection">ServerConnection</a>.<a href="#IRC-process_once">process_once</a>()<br>
+once&nbsp;in&nbsp;a&nbsp;while.</tt></dd></dl>
+
+<dl><dt><a name="IRC-add_global_handler"><strong>add_global_handler</strong></a>(self, event, handler, priority<font color="#909090">=0</font>)</dt><dd><tt>Adds&nbsp;a&nbsp;global&nbsp;handler&nbsp;function&nbsp;for&nbsp;a&nbsp;specific&nbsp;event&nbsp;type.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;event&nbsp;--&nbsp;<a href="#Event">Event</a>&nbsp;type&nbsp;(a&nbsp;string).&nbsp;&nbsp;Check&nbsp;the&nbsp;values&nbsp;of&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;numeric_events&nbsp;dictionary&nbsp;in&nbsp;irclib.py&nbsp;for&nbsp;possible&nbsp;event<br>
+&nbsp;&nbsp;&nbsp;&nbsp;types.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;handler&nbsp;--&nbsp;Callback&nbsp;function.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;priority&nbsp;--&nbsp;A&nbsp;number&nbsp;(the&nbsp;lower&nbsp;number,&nbsp;the&nbsp;higher&nbsp;priority).<br>
+&nbsp;<br>
+The&nbsp;handler&nbsp;function&nbsp;is&nbsp;called&nbsp;whenever&nbsp;the&nbsp;specified&nbsp;event&nbsp;is<br>
+triggered&nbsp;in&nbsp;any&nbsp;of&nbsp;the&nbsp;connections.&nbsp;&nbsp;See&nbsp;documentation&nbsp;for<br>
+the&nbsp;<a href="#Event">Event</a>&nbsp;class.<br>
+&nbsp;<br>
+The&nbsp;handler&nbsp;functions&nbsp;are&nbsp;called&nbsp;in&nbsp;priority&nbsp;order&nbsp;(lowest<br>
+number&nbsp;is&nbsp;highest&nbsp;priority).&nbsp;&nbsp;If&nbsp;a&nbsp;handler&nbsp;function&nbsp;returns<br>
+"NO&nbsp;MORE",&nbsp;no&nbsp;more&nbsp;handlers&nbsp;will&nbsp;be&nbsp;called.</tt></dd></dl>
+
+<dl><dt><a name="IRC-dcc"><strong>dcc</strong></a>(self, dcctype<font color="#909090">='chat'</font>)</dt><dd><tt>Creates&nbsp;and&nbsp;returns&nbsp;a&nbsp;<a href="#DCCConnection">DCCConnection</a>&nbsp;object.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dcctype&nbsp;--&nbsp;"chat"&nbsp;for&nbsp;DCC&nbsp;CHAT&nbsp;connections&nbsp;or&nbsp;"raw"&nbsp;for<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DCC&nbsp;SEND&nbsp;(or&nbsp;other&nbsp;DCC&nbsp;types).&nbsp;If&nbsp;"chat",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;incoming&nbsp;data&nbsp;will&nbsp;be&nbsp;split&nbsp;in&nbsp;newline-separated<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chunks.&nbsp;If&nbsp;"raw",&nbsp;incoming&nbsp;data&nbsp;is&nbsp;not&nbsp;touched.</tt></dd></dl>
+
+<dl><dt><a name="IRC-disconnect_all"><strong>disconnect_all</strong></a>(self, message<font color="#909090">=''</font>)</dt><dd><tt>Disconnects&nbsp;all&nbsp;connections.</tt></dd></dl>
+
+<dl><dt><a name="IRC-execute_at"><strong>execute_at</strong></a>(self, at, function, arguments<font color="#909090">=()</font>)</dt><dd><tt>Execute&nbsp;a&nbsp;function&nbsp;at&nbsp;a&nbsp;specified&nbsp;time.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;--&nbsp;Execute&nbsp;at&nbsp;this&nbsp;time&nbsp;(standard&nbsp;"time_t"&nbsp;time).<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function&nbsp;--&nbsp;Function&nbsp;to&nbsp;call.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;arguments&nbsp;--&nbsp;Arguments&nbsp;to&nbsp;give&nbsp;the&nbsp;function.</tt></dd></dl>
+
+<dl><dt><a name="IRC-execute_delayed"><strong>execute_delayed</strong></a>(self, delay, function, arguments<font color="#909090">=()</font>)</dt><dd><tt>Execute&nbsp;a&nbsp;function&nbsp;after&nbsp;a&nbsp;specified&nbsp;time.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;delay&nbsp;--&nbsp;How&nbsp;many&nbsp;seconds&nbsp;to&nbsp;wait.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function&nbsp;--&nbsp;Function&nbsp;to&nbsp;call.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;arguments&nbsp;--&nbsp;Arguments&nbsp;to&nbsp;give&nbsp;the&nbsp;function.</tt></dd></dl>
+
+<dl><dt><a name="IRC-process_data"><strong>process_data</strong></a>(self, sockets)</dt><dd><tt>Called&nbsp;when&nbsp;there&nbsp;is&nbsp;more&nbsp;data&nbsp;to&nbsp;read&nbsp;on&nbsp;connection&nbsp;sockets.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sockets&nbsp;--&nbsp;A&nbsp;list&nbsp;of&nbsp;socket&nbsp;objects.<br>
+&nbsp;<br>
+See&nbsp;documentation&nbsp;for&nbsp;<a href="#IRC">IRC</a>.__init__.</tt></dd></dl>
+
+<dl><dt><a name="IRC-process_forever"><strong>process_forever</strong></a>(self, timeout<font color="#909090">=0.2</font>)</dt><dd><tt>Run&nbsp;an&nbsp;infinite&nbsp;loop,&nbsp;processing&nbsp;data&nbsp;from&nbsp;connections.<br>
+&nbsp;<br>
+This&nbsp;method&nbsp;repeatedly&nbsp;calls&nbsp;process_once.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;timeout&nbsp;--&nbsp;Parameter&nbsp;to&nbsp;pass&nbsp;to&nbsp;process_once.</tt></dd></dl>
+
+<dl><dt><a name="IRC-process_once"><strong>process_once</strong></a>(self, timeout<font color="#909090">=0</font>)</dt><dd><tt>Process&nbsp;data&nbsp;from&nbsp;connections&nbsp;once.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;timeout&nbsp;--&nbsp;How&nbsp;long&nbsp;the&nbsp;select()&nbsp;call&nbsp;should&nbsp;wait&nbsp;if&nbsp;no<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;data&nbsp;is&nbsp;available.<br>
+&nbsp;<br>
+This&nbsp;method&nbsp;should&nbsp;be&nbsp;called&nbsp;periodically&nbsp;to&nbsp;check&nbsp;and&nbsp;process<br>
+incoming&nbsp;data,&nbsp;if&nbsp;there&nbsp;are&nbsp;any.&nbsp;&nbsp;If&nbsp;that&nbsp;seems&nbsp;boring,&nbsp;look<br>
+at&nbsp;the&nbsp;process_forever&nbsp;method.</tt></dd></dl>
+
+<dl><dt><a name="IRC-process_timeout"><strong>process_timeout</strong></a>(self)</dt><dd><tt>Called&nbsp;when&nbsp;a&nbsp;timeout&nbsp;notification&nbsp;is&nbsp;due.<br>
+&nbsp;<br>
+See&nbsp;documentation&nbsp;for&nbsp;<a href="#IRC">IRC</a>.__init__.</tt></dd></dl>
+
+<dl><dt><a name="IRC-remove_global_handler"><strong>remove_global_handler</strong></a>(self, event, handler)</dt><dd><tt>Removes&nbsp;a&nbsp;global&nbsp;handler&nbsp;function.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;event&nbsp;--&nbsp;<a href="#Event">Event</a>&nbsp;type&nbsp;(a&nbsp;string).<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;handler&nbsp;--&nbsp;Callback&nbsp;function.<br>
+&nbsp;<br>
+Returns&nbsp;1&nbsp;on&nbsp;success,&nbsp;otherwise&nbsp;0.</tt></dd></dl>
+
+<dl><dt><a name="IRC-server"><strong>server</strong></a>(self)</dt><dd><tt>Creates&nbsp;and&nbsp;returns&nbsp;a&nbsp;<a href="#ServerConnection">ServerConnection</a>&nbsp;object.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="IRCError">class <strong>IRCError</strong></a>(<a href="exceptions.html#Exception">exceptions.Exception</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Represents&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;exception.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="irclib.html#IRCError">IRCError</a></dd>
+<dd><a href="exceptions.html#Exception">exceptions.Exception</a></dd>
+<dd><a href="exceptions.html#BaseException">exceptions.BaseException</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><a name="IRCError-__init__"><strong>__init__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__init__">__init__</a>(...)&nbsp;initializes&nbsp;x;&nbsp;see&nbsp;x.__class__.__doc__&nbsp;for&nbsp;signature</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#IRCError-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<hr>
+Methods inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><a name="IRCError-__delattr__"><strong>__delattr__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__delattr__">__delattr__</a>('name')&nbsp;&lt;==&gt;&nbsp;del&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="IRCError-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="IRCError-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="IRCError-__getslice__"><strong>__getslice__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__getslice__">__getslice__</a>(i,&nbsp;j)&nbsp;&lt;==&gt;&nbsp;x[i:j]<br>
+&nbsp;<br>
+Use&nbsp;of&nbsp;negative&nbsp;indices&nbsp;is&nbsp;not&nbsp;supported.</tt></dd></dl>
+
+<dl><dt><a name="IRCError-__reduce__"><strong>__reduce__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="IRCError-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="IRCError-__setattr__"><strong>__setattr__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__setattr__">__setattr__</a>('name',&nbsp;value)&nbsp;&lt;==&gt;&nbsp;x.name&nbsp;=&nbsp;value</tt></dd></dl>
+
+<dl><dt><a name="IRCError-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="IRCError-__str__"><strong>__str__</strong></a>(...)</dt><dd><tt>x.<a href="#IRCError-__str__">__str__</a>()&nbsp;&lt;==&gt;&nbsp;str(x)</tt></dd></dl>
+
+<dl><dt><a name="IRCError-__unicode__"><strong>__unicode__</strong></a>(...)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+<dl><dt><strong>message</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ServerConnection">class <strong>ServerConnection</strong></a>(<a href="irclib.html#Connection">Connection</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>This&nbsp;class&nbsp;represents&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;server&nbsp;connection.<br>
+&nbsp;<br>
+<a href="#ServerConnection">ServerConnection</a>&nbsp;objects&nbsp;are&nbsp;instantiated&nbsp;by&nbsp;calling&nbsp;the&nbsp;server<br>
+method&nbsp;on&nbsp;an&nbsp;<a href="#IRC">IRC</a>&nbsp;object.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="ServerConnection-__init__"><strong>__init__</strong></a>(self, irclibobj)</dt></dl>
+
+<dl><dt><a name="ServerConnection-action"><strong>action</strong></a>(self, target, action)</dt><dd><tt>Send&nbsp;a&nbsp;CTCP&nbsp;ACTION&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-add_global_handler"><strong>add_global_handler</strong></a>(self, *args)</dt><dd><tt>Add&nbsp;global&nbsp;handler.<br>
+&nbsp;<br>
+See&nbsp;documentation&nbsp;for&nbsp;<a href="#IRC">IRC</a>.add_global_handler.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-admin"><strong>admin</strong></a>(self, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;an&nbsp;ADMIN&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-close"><strong>close</strong></a>(self)</dt><dd><tt>Close&nbsp;the&nbsp;connection.<br>
+&nbsp;<br>
+This&nbsp;method&nbsp;closes&nbsp;the&nbsp;connection&nbsp;permanently;&nbsp;after&nbsp;it&nbsp;has<br>
+been&nbsp;called,&nbsp;the&nbsp;object&nbsp;is&nbsp;unusable.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-connect"><strong>connect</strong></a>(self, server, port, nickname, password<font color="#909090">=None</font>, username<font color="#909090">=None</font>, ircname<font color="#909090">=None</font>, localaddress<font color="#909090">=''</font>, localport<font color="#909090">=0</font>, ssl<font color="#909090">=False</font>, ipv6<font color="#909090">=False</font>)</dt><dd><tt>Connect/reconnect&nbsp;to&nbsp;a&nbsp;server.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;server&nbsp;--&nbsp;Server&nbsp;name.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port&nbsp;--&nbsp;Port&nbsp;number.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nickname&nbsp;--&nbsp;The&nbsp;nickname.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;password&nbsp;--&nbsp;Password&nbsp;(if&nbsp;any).<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;username&nbsp;--&nbsp;The&nbsp;username.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ircname&nbsp;--&nbsp;The&nbsp;<a href="#IRC">IRC</a>&nbsp;name&nbsp;("realname").<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;localaddress&nbsp;--&nbsp;Bind&nbsp;the&nbsp;connection&nbsp;to&nbsp;a&nbsp;specific&nbsp;local&nbsp;IP&nbsp;address.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;localport&nbsp;--&nbsp;Bind&nbsp;the&nbsp;connection&nbsp;to&nbsp;a&nbsp;specific&nbsp;local&nbsp;port.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ssl&nbsp;--&nbsp;Enable&nbsp;support&nbsp;for&nbsp;ssl.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ipv6&nbsp;--&nbsp;Enable&nbsp;support&nbsp;for&nbsp;ipv6.<br>
+&nbsp;<br>
+This&nbsp;function&nbsp;can&nbsp;be&nbsp;called&nbsp;to&nbsp;reconnect&nbsp;a&nbsp;closed&nbsp;connection.<br>
+&nbsp;<br>
+Returns&nbsp;the&nbsp;<a href="#ServerConnection">ServerConnection</a>&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-ctcp"><strong>ctcp</strong></a>(self, ctcptype, target, parameter<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;CTCP&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-ctcp_reply"><strong>ctcp_reply</strong></a>(self, target, parameter)</dt><dd><tt>Send&nbsp;a&nbsp;CTCP&nbsp;REPLY&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-disconnect"><strong>disconnect</strong></a>(self, message<font color="#909090">=''</font>)</dt><dd><tt>Hang&nbsp;up&nbsp;the&nbsp;connection.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;message&nbsp;--&nbsp;Quit&nbsp;message.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-get_nickname"><strong>get_nickname</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;(real)&nbsp;nick&nbsp;name.<br>
+&nbsp;<br>
+This&nbsp;method&nbsp;returns&nbsp;the&nbsp;(real)&nbsp;nickname.&nbsp;&nbsp;The&nbsp;library&nbsp;keeps<br>
+track&nbsp;of&nbsp;nick&nbsp;changes,&nbsp;so&nbsp;it&nbsp;might&nbsp;not&nbsp;be&nbsp;the&nbsp;nick&nbsp;name&nbsp;that<br>
+was&nbsp;passed&nbsp;to&nbsp;the&nbsp;<a href="#ServerConnection-connect">connect</a>()&nbsp;method.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-get_server_name"><strong>get_server_name</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;(real)&nbsp;server&nbsp;name.<br>
+&nbsp;<br>
+This&nbsp;method&nbsp;returns&nbsp;the&nbsp;(real)&nbsp;server&nbsp;name,&nbsp;or,&nbsp;more<br>
+specifically,&nbsp;what&nbsp;the&nbsp;server&nbsp;calls&nbsp;itself.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-globops"><strong>globops</strong></a>(self, text)</dt><dd><tt>Send&nbsp;a&nbsp;GLOBOPS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-info"><strong>info</strong></a>(self, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;an&nbsp;INFO&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-invite"><strong>invite</strong></a>(self, nick, channel)</dt><dd><tt>Send&nbsp;an&nbsp;INVITE&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-is_connected"><strong>is_connected</strong></a>(self)</dt><dd><tt>Return&nbsp;connection&nbsp;status.<br>
+&nbsp;<br>
+Returns&nbsp;true&nbsp;if&nbsp;connected,&nbsp;otherwise&nbsp;false.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-ison"><strong>ison</strong></a>(self, nicks)</dt><dd><tt>Send&nbsp;an&nbsp;ISON&nbsp;command.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nicks&nbsp;--&nbsp;List&nbsp;of&nbsp;nicks.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-join"><strong>join</strong></a>(self, channel, key<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;JOIN&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-kick"><strong>kick</strong></a>(self, channel, nick, comment<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;KICK&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-links"><strong>links</strong></a>(self, remote_server<font color="#909090">=''</font>, server_mask<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;LINKS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-list"><strong>list</strong></a>(self, channels<font color="#909090">=None</font>, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;LIST&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-lusers"><strong>lusers</strong></a>(self, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;LUSERS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-mode"><strong>mode</strong></a>(self, target, command)</dt><dd><tt>Send&nbsp;a&nbsp;MODE&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-motd"><strong>motd</strong></a>(self, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;an&nbsp;MOTD&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-names"><strong>names</strong></a>(self, channels<font color="#909090">=None</font>)</dt><dd><tt>Send&nbsp;a&nbsp;NAMES&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-nick"><strong>nick</strong></a>(self, newnick)</dt><dd><tt>Send&nbsp;a&nbsp;NICK&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-notice"><strong>notice</strong></a>(self, target, text)</dt><dd><tt>Send&nbsp;a&nbsp;NOTICE&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-oper"><strong>oper</strong></a>(self, nick, password)</dt><dd><tt>Send&nbsp;an&nbsp;OPER&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-part"><strong>part</strong></a>(self, channels, message<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;PART&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-pass_"><strong>pass_</strong></a>(self, password)</dt><dd><tt>Send&nbsp;a&nbsp;PASS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-ping"><strong>ping</strong></a>(self, target, target2<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;PING&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-pong"><strong>pong</strong></a>(self, target, target2<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;PONG&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-privmsg"><strong>privmsg</strong></a>(self, target, text)</dt><dd><tt>Send&nbsp;a&nbsp;PRIVMSG&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-privmsg_many"><strong>privmsg_many</strong></a>(self, targets, text)</dt><dd><tt>Send&nbsp;a&nbsp;PRIVMSG&nbsp;command&nbsp;to&nbsp;multiple&nbsp;targets.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-process_data"><strong>process_data</strong></a>(self)</dt><dd><tt>[Internal]</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-quit"><strong>quit</strong></a>(self, message<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;QUIT&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-remove_global_handler"><strong>remove_global_handler</strong></a>(self, *args)</dt><dd><tt>Remove&nbsp;global&nbsp;handler.<br>
+&nbsp;<br>
+See&nbsp;documentation&nbsp;for&nbsp;<a href="#IRC">IRC</a>.remove_global_handler.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-send_raw"><strong>send_raw</strong></a>(self, string)</dt><dd><tt>Send&nbsp;raw&nbsp;string&nbsp;to&nbsp;the&nbsp;server.<br>
+&nbsp;<br>
+The&nbsp;string&nbsp;will&nbsp;be&nbsp;padded&nbsp;with&nbsp;appropriate&nbsp;CR&nbsp;LF.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-squit"><strong>squit</strong></a>(self, server, comment<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;an&nbsp;SQUIT&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-stats"><strong>stats</strong></a>(self, statstype, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;STATS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-time"><strong>time</strong></a>(self, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;TIME&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-topic"><strong>topic</strong></a>(self, channel, new_topic<font color="#909090">=None</font>)</dt><dd><tt>Send&nbsp;a&nbsp;TOPIC&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-trace"><strong>trace</strong></a>(self, target<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;TRACE&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-user"><strong>user</strong></a>(self, username, realname)</dt><dd><tt>Send&nbsp;a&nbsp;USER&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-userhost"><strong>userhost</strong></a>(self, nicks)</dt><dd><tt>Send&nbsp;a&nbsp;USERHOST&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-users"><strong>users</strong></a>(self, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;USERS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-version"><strong>version</strong></a>(self, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;VERSION&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-wallops"><strong>wallops</strong></a>(self, text)</dt><dd><tt>Send&nbsp;a&nbsp;WALLOPS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-who"><strong>who</strong></a>(self, target<font color="#909090">=''</font>, op<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;WHO&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-whois"><strong>whois</strong></a>(self, targets)</dt><dd><tt>Send&nbsp;a&nbsp;WHOIS&nbsp;command.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnection-whowas"><strong>whowas</strong></a>(self, nick, max<font color="#909090">=''</font>, server<font color="#909090">=''</font>)</dt><dd><tt>Send&nbsp;a&nbsp;WHOWAS&nbsp;command.</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="irclib.html#Connection">Connection</a>:<br>
+<dl><dt><a name="ServerConnection-execute_at"><strong>execute_at</strong></a>(self, at, function, arguments<font color="#909090">=()</font>)</dt></dl>
+
+<dl><dt><a name="ServerConnection-execute_delayed"><strong>execute_delayed</strong></a>(self, delay, function, arguments<font color="#909090">=()</font>)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ServerConnectionError">class <strong>ServerConnectionError</strong></a>(<a href="irclib.html#IRCError">IRCError</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="irclib.html#ServerConnectionError">ServerConnectionError</a></dd>
+<dd><a href="irclib.html#IRCError">IRCError</a></dd>
+<dd><a href="exceptions.html#Exception">exceptions.Exception</a></dd>
+<dd><a href="exceptions.html#BaseException">exceptions.BaseException</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Data descriptors inherited from <a href="irclib.html#IRCError">IRCError</a>:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><a name="ServerConnectionError-__init__"><strong>__init__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__init__">__init__</a>(...)&nbsp;initializes&nbsp;x;&nbsp;see&nbsp;x.__class__.__doc__&nbsp;for&nbsp;signature</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#ServerConnectionError-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<hr>
+Methods inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><a name="ServerConnectionError-__delattr__"><strong>__delattr__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__delattr__">__delattr__</a>('name')&nbsp;&lt;==&gt;&nbsp;del&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="ServerConnectionError-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="ServerConnectionError-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="ServerConnectionError-__getslice__"><strong>__getslice__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__getslice__">__getslice__</a>(i,&nbsp;j)&nbsp;&lt;==&gt;&nbsp;x[i:j]<br>
+&nbsp;<br>
+Use&nbsp;of&nbsp;negative&nbsp;indices&nbsp;is&nbsp;not&nbsp;supported.</tt></dd></dl>
+
+<dl><dt><a name="ServerConnectionError-__reduce__"><strong>__reduce__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="ServerConnectionError-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="ServerConnectionError-__setattr__"><strong>__setattr__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__setattr__">__setattr__</a>('name',&nbsp;value)&nbsp;&lt;==&gt;&nbsp;x.name&nbsp;=&nbsp;value</tt></dd></dl>
+
+<dl><dt><a name="ServerConnectionError-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="ServerConnectionError-__str__"><strong>__str__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerConnectionError-__str__">__str__</a>()&nbsp;&lt;==&gt;&nbsp;str(x)</tt></dd></dl>
+
+<dl><dt><a name="ServerConnectionError-__unicode__"><strong>__unicode__</strong></a>(...)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+<dl><dt><strong>message</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ServerNotConnectedError">class <strong>ServerNotConnectedError</strong></a>(<a href="irclib.html#ServerConnectionError">ServerConnectionError</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="irclib.html#ServerNotConnectedError">ServerNotConnectedError</a></dd>
+<dd><a href="irclib.html#ServerConnectionError">ServerConnectionError</a></dd>
+<dd><a href="irclib.html#IRCError">IRCError</a></dd>
+<dd><a href="exceptions.html#Exception">exceptions.Exception</a></dd>
+<dd><a href="exceptions.html#BaseException">exceptions.BaseException</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Data descriptors inherited from <a href="irclib.html#IRCError">IRCError</a>:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><a name="ServerNotConnectedError-__init__"><strong>__init__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__init__">__init__</a>(...)&nbsp;initializes&nbsp;x;&nbsp;see&nbsp;x.__class__.__doc__&nbsp;for&nbsp;signature</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="exceptions.html#Exception">exceptions.Exception</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object&gt;<dd><tt>T.<a href="#ServerNotConnectedError-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+<hr>
+Methods inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><a name="ServerNotConnectedError-__delattr__"><strong>__delattr__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__delattr__">__delattr__</a>('name')&nbsp;&lt;==&gt;&nbsp;del&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__getitem__"><strong>__getitem__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__getitem__">__getitem__</a>(y)&nbsp;&lt;==&gt;&nbsp;x[y]</tt></dd></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__getslice__"><strong>__getslice__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__getslice__">__getslice__</a>(i,&nbsp;j)&nbsp;&lt;==&gt;&nbsp;x[i:j]<br>
+&nbsp;<br>
+Use&nbsp;of&nbsp;negative&nbsp;indices&nbsp;is&nbsp;not&nbsp;supported.</tt></dd></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__reduce__"><strong>__reduce__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__repr__"><strong>__repr__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__repr__">__repr__</a>()&nbsp;&lt;==&gt;&nbsp;repr(x)</tt></dd></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__setattr__"><strong>__setattr__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__setattr__">__setattr__</a>('name',&nbsp;value)&nbsp;&lt;==&gt;&nbsp;x.name&nbsp;=&nbsp;value</tt></dd></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__str__"><strong>__str__</strong></a>(...)</dt><dd><tt>x.<a href="#ServerNotConnectedError-__str__">__str__</a>()&nbsp;&lt;==&gt;&nbsp;str(x)</tt></dd></dl>
+
+<dl><dt><a name="ServerNotConnectedError-__unicode__"><strong>__unicode__</strong></a>(...)</dt></dl>
+
+<hr>
+Data descriptors inherited from <a href="exceptions.html#BaseException">exceptions.BaseException</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+<dl><dt><strong>message</strong></dt>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SimpleIRCClient">class <strong>SimpleIRCClient</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;simple&nbsp;single-server&nbsp;<a href="#IRC">IRC</a>&nbsp;client&nbsp;class.<br>
+&nbsp;<br>
+This&nbsp;is&nbsp;an&nbsp;example&nbsp;of&nbsp;an&nbsp;object-oriented&nbsp;wrapper&nbsp;of&nbsp;the&nbsp;<a href="#IRC">IRC</a><br>
+framework.&nbsp;&nbsp;A&nbsp;real&nbsp;<a href="#IRC">IRC</a>&nbsp;client&nbsp;can&nbsp;be&nbsp;made&nbsp;by&nbsp;subclassing&nbsp;this<br>
+class&nbsp;and&nbsp;adding&nbsp;appropriate&nbsp;methods.<br>
+&nbsp;<br>
+The&nbsp;method&nbsp;on_join&nbsp;will&nbsp;be&nbsp;called&nbsp;when&nbsp;a&nbsp;"join"&nbsp;event&nbsp;is&nbsp;created<br>
+(which&nbsp;is&nbsp;done&nbsp;when&nbsp;the&nbsp;server&nbsp;sends&nbsp;a&nbsp;JOIN&nbsp;messsage/command),<br>
+on_privmsg&nbsp;will&nbsp;be&nbsp;called&nbsp;for&nbsp;"privmsg"&nbsp;events,&nbsp;and&nbsp;so&nbsp;on.&nbsp;&nbsp;The<br>
+handler&nbsp;methods&nbsp;get&nbsp;two&nbsp;arguments:&nbsp;the&nbsp;connection&nbsp;object&nbsp;(same&nbsp;as<br>
+self.<strong>connection</strong>)&nbsp;and&nbsp;the&nbsp;event&nbsp;object.<br>
+&nbsp;<br>
+Instance&nbsp;attributes&nbsp;that&nbsp;can&nbsp;be&nbsp;used&nbsp;by&nbsp;sub&nbsp;classes:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ircobj&nbsp;--&nbsp;The&nbsp;<a href="#IRC">IRC</a>&nbsp;instance.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;connection&nbsp;--&nbsp;The&nbsp;<a href="#ServerConnection">ServerConnection</a>&nbsp;instance.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dcc_connections&nbsp;--&nbsp;A&nbsp;list&nbsp;of&nbsp;<a href="#DCCConnection">DCCConnection</a>&nbsp;instances.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="SimpleIRCClient-__init__"><strong>__init__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SimpleIRCClient-connect"><strong>connect</strong></a>(self, server, port, nickname, password<font color="#909090">=None</font>, username<font color="#909090">=None</font>, ircname<font color="#909090">=None</font>, localaddress<font color="#909090">=''</font>, localport<font color="#909090">=0</font>, ssl<font color="#909090">=False</font>, ipv6<font color="#909090">=False</font>)</dt><dd><tt>Connect/reconnect&nbsp;to&nbsp;a&nbsp;server.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;server&nbsp;--&nbsp;Server&nbsp;name.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port&nbsp;--&nbsp;Port&nbsp;number.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nickname&nbsp;--&nbsp;The&nbsp;nickname.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;password&nbsp;--&nbsp;Password&nbsp;(if&nbsp;any).<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;username&nbsp;--&nbsp;The&nbsp;username.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ircname&nbsp;--&nbsp;The&nbsp;<a href="#IRC">IRC</a>&nbsp;name.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;localaddress&nbsp;--&nbsp;Bind&nbsp;the&nbsp;connection&nbsp;to&nbsp;a&nbsp;specific&nbsp;local&nbsp;IP&nbsp;address.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;localport&nbsp;--&nbsp;Bind&nbsp;the&nbsp;connection&nbsp;to&nbsp;a&nbsp;specific&nbsp;local&nbsp;port.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ssl&nbsp;--&nbsp;Enable&nbsp;support&nbsp;for&nbsp;ssl.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ipv6&nbsp;--&nbsp;Enable&nbsp;support&nbsp;for&nbsp;ipv6.<br>
+&nbsp;<br>
+This&nbsp;function&nbsp;can&nbsp;be&nbsp;called&nbsp;to&nbsp;reconnect&nbsp;a&nbsp;closed&nbsp;connection.</tt></dd></dl>
+
+<dl><dt><a name="SimpleIRCClient-dcc_connect"><strong>dcc_connect</strong></a>(self, address, port, dcctype<font color="#909090">='chat'</font>)</dt><dd><tt>Connect&nbsp;to&nbsp;a&nbsp;DCC&nbsp;peer.<br>
+&nbsp;<br>
+Arguments:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;address&nbsp;--&nbsp;IP&nbsp;address&nbsp;of&nbsp;the&nbsp;peer.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port&nbsp;--&nbsp;Port&nbsp;to&nbsp;connect&nbsp;to.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;<a href="#DCCConnection">DCCConnection</a>&nbsp;instance.</tt></dd></dl>
+
+<dl><dt><a name="SimpleIRCClient-dcc_listen"><strong>dcc_listen</strong></a>(self, dcctype<font color="#909090">='chat'</font>)</dt><dd><tt>Listen&nbsp;for&nbsp;connections&nbsp;from&nbsp;a&nbsp;DCC&nbsp;peer.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;<a href="#DCCConnection">DCCConnection</a>&nbsp;instance.</tt></dd></dl>
+
+<dl><dt><a name="SimpleIRCClient-start"><strong>start</strong></a>(self)</dt><dd><tt>Start&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;client.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-ip_numstr_to_quad"><strong>ip_numstr_to_quad</strong></a>(num)</dt><dd><tt>Convert&nbsp;an&nbsp;IP&nbsp;number&nbsp;as&nbsp;an&nbsp;integer&nbsp;given&nbsp;in&nbsp;ASCII<br>
+representation&nbsp;(e.g.&nbsp;'3232235521')&nbsp;to&nbsp;an&nbsp;IP&nbsp;address&nbsp;string<br>
+(e.g.&nbsp;'192.168.0.1').</tt></dd></dl>
+ <dl><dt><a name="-ip_quad_to_numstr"><strong>ip_quad_to_numstr</strong></a>(quad)</dt><dd><tt>Convert&nbsp;an&nbsp;IP&nbsp;address&nbsp;string&nbsp;(e.g.&nbsp;'192.168.0.1')&nbsp;to&nbsp;an&nbsp;IP<br>
+number&nbsp;as&nbsp;an&nbsp;integer&nbsp;given&nbsp;in&nbsp;ASCII&nbsp;representation<br>
+(e.g.&nbsp;'3232235521').</tt></dd></dl>
+ <dl><dt><a name="-irc_lower"><strong>irc_lower</strong></a>(s)</dt><dd><tt>Returns&nbsp;a&nbsp;lowercased&nbsp;string.<br>
+&nbsp;<br>
+The&nbsp;definition&nbsp;of&nbsp;lowercased&nbsp;comes&nbsp;from&nbsp;the&nbsp;<a href="#IRC">IRC</a>&nbsp;specification&nbsp;(RFC<br>
+1459).</tt></dd></dl>
+ <dl><dt><a name="-is_channel"><strong>is_channel</strong></a>(string)</dt><dd><tt>Check&nbsp;if&nbsp;a&nbsp;string&nbsp;is&nbsp;a&nbsp;channel&nbsp;name.<br>
+&nbsp;<br>
+Returns&nbsp;true&nbsp;if&nbsp;the&nbsp;argument&nbsp;is&nbsp;a&nbsp;channel&nbsp;name,&nbsp;otherwise&nbsp;false.</tt></dd></dl>
+ <dl><dt><a name="-mask_matches"><strong>mask_matches</strong></a>(nick, mask)</dt><dd><tt>Check&nbsp;if&nbsp;a&nbsp;nick&nbsp;matches&nbsp;a&nbsp;mask.<br>
+&nbsp;<br>
+Returns&nbsp;true&nbsp;if&nbsp;the&nbsp;nick&nbsp;matches,&nbsp;otherwise&nbsp;false.</tt></dd></dl>
+ <dl><dt><a name="-nm_to_h"><strong>nm_to_h</strong></a>(s)</dt><dd><tt>Get&nbsp;the&nbsp;host&nbsp;part&nbsp;of&nbsp;a&nbsp;nickmask.<br>
+&nbsp;<br>
+(The&nbsp;source&nbsp;of&nbsp;an&nbsp;<a href="#Event">Event</a>&nbsp;is&nbsp;a&nbsp;nickmask.)</tt></dd></dl>
+ <dl><dt><a name="-nm_to_n"><strong>nm_to_n</strong></a>(s)</dt><dd><tt>Get&nbsp;the&nbsp;nick&nbsp;part&nbsp;of&nbsp;a&nbsp;nickmask.<br>
+&nbsp;<br>
+(The&nbsp;source&nbsp;of&nbsp;an&nbsp;<a href="#Event">Event</a>&nbsp;is&nbsp;a&nbsp;nickmask.)</tt></dd></dl>
+ <dl><dt><a name="-nm_to_u"><strong>nm_to_u</strong></a>(s)</dt><dd><tt>Get&nbsp;the&nbsp;user&nbsp;part&nbsp;of&nbsp;a&nbsp;nickmask.<br>
+&nbsp;<br>
+(The&nbsp;source&nbsp;of&nbsp;an&nbsp;<a href="#Event">Event</a>&nbsp;is&nbsp;a&nbsp;nickmask.)</tt></dd></dl>
+ <dl><dt><a name="-nm_to_uh"><strong>nm_to_uh</strong></a>(s)</dt><dd><tt>Get&nbsp;the&nbsp;userhost&nbsp;part&nbsp;of&nbsp;a&nbsp;nickmask.<br>
+&nbsp;<br>
+(The&nbsp;source&nbsp;of&nbsp;an&nbsp;<a href="#Event">Event</a>&nbsp;is&nbsp;a&nbsp;nickmask.)</tt></dd></dl>
+ <dl><dt><a name="-parse_channel_modes"><strong>parse_channel_modes</strong></a>(mode_string)</dt><dd><tt>Parse&nbsp;a&nbsp;channel&nbsp;mode&nbsp;string.<br>
+&nbsp;<br>
+The&nbsp;function&nbsp;returns&nbsp;a&nbsp;list&nbsp;of&nbsp;lists&nbsp;with&nbsp;three&nbsp;members:&nbsp;sign,<br>
+mode&nbsp;and&nbsp;argument.&nbsp;&nbsp;The&nbsp;sign&nbsp;is&nbsp;"+"&nbsp;or&nbsp;"-".&nbsp;&nbsp;The&nbsp;argument&nbsp;is<br>
+None&nbsp;if&nbsp;mode&nbsp;isn't&nbsp;one&nbsp;of&nbsp;"b",&nbsp;"k",&nbsp;"l",&nbsp;"v"&nbsp;or&nbsp;"o".<br>
+&nbsp;<br>
+Example:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;irclib.<a href="#-parse_channel_modes">parse_channel_modes</a>("+ab-c&nbsp;foo")<br>
+[['+',&nbsp;'a',&nbsp;None],&nbsp;['+',&nbsp;'b',&nbsp;'foo'],&nbsp;['-',&nbsp;'c',&nbsp;None]]</tt></dd></dl>
+ <dl><dt><a name="-parse_nick_modes"><strong>parse_nick_modes</strong></a>(mode_string)</dt><dd><tt>Parse&nbsp;a&nbsp;nick&nbsp;mode&nbsp;string.<br>
+&nbsp;<br>
+The&nbsp;function&nbsp;returns&nbsp;a&nbsp;list&nbsp;of&nbsp;lists&nbsp;with&nbsp;three&nbsp;members:&nbsp;sign,<br>
+mode&nbsp;and&nbsp;argument.&nbsp;&nbsp;The&nbsp;sign&nbsp;is&nbsp;"+"&nbsp;or&nbsp;"-".&nbsp;&nbsp;The&nbsp;argument&nbsp;is<br>
+always&nbsp;None.<br>
+&nbsp;<br>
+Example:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;irclib.<a href="#-parse_nick_modes">parse_nick_modes</a>("+ab-c")<br>
+[['+',&nbsp;'a',&nbsp;None],&nbsp;['+',&nbsp;'b',&nbsp;None],&nbsp;['-',&nbsp;'c',&nbsp;None]]</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>DEBUG</strong> = 0<br>
+<strong>VERSION</strong> = (0, 4, 8)<br>
+<strong>all_events</strong> = ['dcc_connect', 'dcc_disconnect', 'dccmsg', 'disconnect', 'ctcp', 'ctcpreply', 'error', 'join', 'kick', 'mode', 'part', 'ping', 'privmsg', 'privnotice', 'pubmsg', 'pubnotice', 'quit', 'invite', 'pong', 'statskline', ...]<br>
+<strong>generated_events</strong> = ['dcc_connect', 'dcc_disconnect', 'dccmsg', 'disconnect', 'ctcp', 'ctcpreply']<br>
+<strong>nick_characters</strong> = r'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-[]\`^{}'<br>
+<strong>numeric_events</strong> = {'001': 'welcome', '002': 'yourhost', '003': 'created', '004': 'myinfo', '005': 'featurelist', '200': 'tracelink', '201': 'traceconnecting', '202': 'tracehandshake', '203': 'traceunknown', '204': 'traceoperator', ...}<br>
+<strong>protocol_events</strong> = ['error', 'join', 'kick', 'mode', 'part', 'ping', 'privmsg', 'privnotice', 'pubmsg', 'pubnotice', 'quit', 'invite', 'pong']</td></tr></table>
+</body></html>
