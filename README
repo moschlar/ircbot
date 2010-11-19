@@ -1,0 +1,3 @@
+ircbot will become a versatile and verbose IRC bot for fun and partially useful activities in the local IRC network at wohnheime.uni-mainz.de
+
+It will be written in Python using python-irclib <http://python-irclib.sourceforge.net/>
