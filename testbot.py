@@ -11,7 +11,7 @@ ircbot.py.
 
 """
 
-import testbot_config
+CONFIG_FILE = "testbot.cfg"
 
 from ircbot import SingleServerIRCBot
 from irclib import nm_to_n, nm_to_h, irc_lower, ip_numstr_to_quad, ip_quad_to_numstr
