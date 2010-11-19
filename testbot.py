@@ -18,9 +18,15 @@ from irclib import nm_to_n, nm_to_h, irc_lower, ip_numstr_to_quad, ip_quad_to_nu
 
 class TestBot(SingleServerIRCBot):
     
-    def __init__(self, nickname, realname, channel, server, port=6667):
+    def __init__(self, server, nickname, realname, channel_list):
+        if server.rfind(":") == -1:
+            port = 6667
+        else:
+            port = int(server.rsplit(":",1)[-1])
         SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
-        self.channel = channel
+        self.channel_list = channel_list
+        self.channel = channel_list[0]
+        self.lastuser = "Nobody."
     
     def setResponses(self,responses):
         self.responses = responses
@@ -29,54 +35,73 @@ class TestBot(SingleServerIRCBot):
         c.nick(c.get_nickname() + "_")
     
     def on_welcome(self, c, e):
-        c.join(self.channel)
-        c.notice(self.channel,"moschlar Hallo Papa!")
+        for chan in self.channel_list:
+            c.join(chan)
+        #c.privmsg(self.channel,"moschlar Hallo Papa!")
     
     def on_pubmsg(self, c, e):
         
-        print e.eventtype()
-        print e.source()
-        print e.target()
-        print e.arguments()
-        
         a = e.arguments()[0]
         
-        for r in self.responses:
-            if a.find(r[0]) != -1:
-                c.notice(self.channel,r[1])
+        # Did someone mention my name?
+        if a.find(irc_lower(self.connection.get_nickname())) != -1:
+            #print("Whoopie, someones talking to me....")
+            c.privmsg(e.target(),"Wat is los?")
         
-        b = a.split(":", 1)
-        if len(b) > 1 and irc_lower(b[0]) == irc_lower(self.connection.get_nickname()):
-            print("Whoopie, someones talking to me....")
-            c.notice(self.channel,"Cookies?")
-            #self.do_command(e, a[1].strip())
+        # Did someone say something interesting?
+        for r in self.responses.keys():
+            if irc_lower(a).find(irc_lower(r)) != -1:
+                print("Found %s" % r)
+                c.privmsg(e.target(),self.responses.get(r))
+        
+        return
+    
+    def on_privmsg(self, c, e):
+        a = e.arguments()[0]
+        
+        cmd = a.split()
+        
+        # Now what to do?
+        if cmd[0] == "help":
+            c.privmsg(e.source(),"Help is on its way!")
+            
+            
+        elif cmd[0] == "exorcism":
+            c.privmsg(e.source(),self.lastuser)
+            
+        elif cmd[0] == "keywords":
+            c.privmsg(e.source(),self.responses.keys())
+            
+        elif (cmd[0] == "say") and (len(cmd) > 1):
+            if cmd[1].startswith("#"):
+                chan = cmd[1]
+            else:
+                chan = self.channel
+            self.lastuser = nm_to_n(e.source())
+            c.privmsg(chan,a.split(None,2)[-1])
+        
         return
     
 def main():
     
     # Parsing the bot's configuration
-    
     from ConfigParser import SafeConfigParser
-    import codecs
-    
     config = SafeConfigParser()
     config.read(CONFIG_FILE)
-    #with codecs.open(CONFIG_FILE, "r", encoding="utf-8") as f:
-    #    config.readfp(f)
     
     nickname = config.get("global", "nickname")
     realname = config.get("global", "realname")
-    server_list = config.get("global", "server_list").split(",")
-    channel = config.get("global", "channel")
-    print("I'm %s (%s) at %s" %(nickname, realname, server_list))
+    server = config.get("global", "server")
+    channel_list = config.get("global", "channel_list").split(",")
+    print("I'm %s (%s) at %s%s" %(nickname, realname, server, channel_list))
     
-    responses = config.items("responses")
-    #responses = {}
-    #for i in config.items("responses"):
-    #    responses[i[0]] = i[1]
+    # Make dictionary of responses
+    responses = {}
+    for i in config.items("responses"):
+        responses[i[0]] = i[1]
     print("I respond to: %s" % responses)
     
-    testbot = TestBot(nickname, realname, channel, server_list[0])
+    testbot = TestBot(server, nickname, realname, channel_list)
     testbot.setResponses(responses)
     testbot.start()
     

@@ -1,3 +1,7 @@
 To-Do-List:
+===========
 
-- Implement umlauts… UTF-8 would be best!
+- Use database storage for response dictionary (sqlite)
+- Use database for op modes
+- Use algorithm to determine voice mode
+- DoHouse
