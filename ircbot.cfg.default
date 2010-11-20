@@ -1,9 +1,15 @@
 [global]
-server:         1.2.3.4
+server:         1.2.3.4:6667
 # first entry is main channel, you can list many channels separated by ,
 channel_list:   #public
 nickname:       masterbot
 realname:       Master of the Universe
+
+[database]
+server:     2.3.4.5
+user:       user
+passwd:     passwd
+database:   db
 
 [responses]
 # This section contains the standard responses that can be loaded back again 
