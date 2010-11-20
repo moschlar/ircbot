@@ -102,9 +102,6 @@ class TestBot(SingleServerIRCBot):
             except:
                 self.exorcism(c, e)
             
-        elif cmd[0] == "keywords":
-            c.privmsg(e.source(),self.responses.keys())
-            
         elif (cmd[0] == "say") and (len(cmd) > 1):
             self.sayByProxy(c, e, a.split(None,1)[-1])
             
@@ -127,13 +124,13 @@ class TestBot(SingleServerIRCBot):
         elif cmd == "set" and len(params) == 2:
             self.responses[params[0]] = params[1]
             c.privmsg(e.source(),"Set %s to %s" % (params[0],params[1]))
-            #self.saveResponses()
+            self.saveResponses()
         elif cmd == "del" and len(params) >= 1:
             # If we don't have the keyword or user is not auth, we must not try to do anything
             if params[0] in self.responses.keys() and auth:
                 c.privmsg(e.source(),"%s gelöscht" % params[0])
                 del(self.responses[params[0]])
-                #self.saveResponses()
+                self.saveResponses()
             else:
                 c.privmsg(e.source(), "Des geht nit!")
         elif cmd == "init":
@@ -146,7 +143,8 @@ class TestBot(SingleServerIRCBot):
                 for i in config.items("responses"):
                     responses[i[0]] = i[1]
                 c.privmsg(e.source(),"Now I'm back responding to: %s" % responses.keys())
-                #self.saveResponses()
+                self.responses = responses
+                self.saveResponses()
         return
     
     def debugMe(self,c,e):
