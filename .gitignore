@@ -1,0 +1,4 @@
+# Non-default Configuration
+*.cfg
+# Pickled data
+*.pkl

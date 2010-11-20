@@ -1,0 +1,12 @@
+[global]
+server:         1.2.3.4
+# first entry is main channel, you can list many channels separated by ,
+channel_list:   #public
+nickname:       masterbot
+realname:       Master of the Universe
+
+[responses]
+# This section contains the standard responses that can be loaded back again 
+# by privmsging "responses init" to the bot.
+# The current response configuration will then be lost!
+42:             42? Yeah.... Universe, life and everything and stuff...

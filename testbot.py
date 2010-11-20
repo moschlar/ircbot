@@ -73,10 +73,10 @@ class TestBot(SingleServerIRCBot):
             c.privmsg(e.target(),"Wat is los?")
         
         # Did someone say something interesting?
-        for r in self.responses.keys():
-            if irc_lower(a).find(irc_lower(r)) != -1:
-                print("Found %s" % r)
-                c.privmsg(e.target(),self.responses.get(r))
+        for (keyword,response) in self.responses.items():
+            if irc_lower(a).find(irc_lower(keyword)) != -1:
+                print("Found %s" % keyword)
+                c.privmsg(e.target(), response)
         
         return
     
@@ -89,9 +89,11 @@ class TestBot(SingleServerIRCBot):
         cmd = a.split()
         
         # Now what to do?
-        if cmd[0] == "help":
-            c.privmsg(e.source(),"Help is on its way!")
+        if cmd[0] == "debugme":
+            self.debugMe(c,e)
             
+        elif cmd[0] == "help":
+            c.privmsg(e.source(),"Help is on its way!")
             
         elif cmd[0] == "exorcism":
             try:
@@ -107,20 +109,64 @@ class TestBot(SingleServerIRCBot):
             self.sayByProxy(c, e, a.split(None,1)[-1])
             
         elif (cmd[0] == "response") and (len(cmd) > 1):
-            if cmd[1] == "list":
-                c.privmsg(e.source(),self.responses.keys())
-            elif cmd[1] == "set" and len(cmd) > 3:
-                self.responses[cmd[2]] = cmd[3]
-                c.privmsg(e.source(),"Set %s to %s" % (cmd[2],cmd[3]))
-                self.saveResponses
-            elif cmd[1] == "del" and len(cmd) > 2:
-                if self.channels[self.channel].is_voiced(nm_to_n(e.source())):
-                    c.privmsg(e.source(),"%s gelöscht" % cmd[2])
-                    del(self.responses[cmd[2]])
-                else:
-                    c.privmsg(e.source(),"Nah, des geht nit!")
+            self.response(c, e, a.split(None,1)[-1])
             
         return
+    
+    def response(self,c,e,action):
+        cmd = action.split(None,1)[0]
+        params = action.split(None,2)[1:]
+        
+        auth = False
+        for chname,chobj in self.channels.items():
+            auth = auth or nm_to_n(e.source()) in chobj.opers()
+        print ("%s auth: %s" % (nm_to_n(e.source()), auth))
+        
+        if cmd == "list":
+            c.privmsg(e.source(),self.responses.keys())
+        elif cmd == "set" and len(params) == 2:
+            self.responses[params[0]] = params[1]
+            c.privmsg(e.source(),"Set %s to %s" % (params[0],params[1]))
+            #self.saveResponses()
+        elif cmd == "del" and len(params) >= 1:
+            # If we don't have the keyword or user is not auth, we must not try to do anything
+            if params[0] in self.responses.keys() and auth:
+                c.privmsg(e.source(),"%s gelöscht" % params[0])
+                del(self.responses[params[0]])
+                #self.saveResponses()
+            else:
+                c.privmsg(e.source(), "Des geht nit!")
+        elif cmd == "init":
+            if auth:
+                from ConfigParser import SafeConfigParser
+                config = SafeConfigParser()
+                config.read(CONFIG_FILE)
+                
+                responses = {}
+                for i in config.items("responses"):
+                    responses[i[0]] = i[1]
+                c.privmsg(e.source(),"Now I'm back responding to: %s" % responses.keys())
+                #self.saveResponses()
+        return
+    
+    def debugMe(self,c,e):
+        """
+        Prints out debugging information about the bots state and its channels
+        """
+        print("self.channels.items(): %s" % self.channels.items())
+        for chname, chobj in self.channels.items():
+            print("chname: %s chobj: %s" % (chname, chobj))
+            c.privmsg(e.source(), "--- Channel statistics ---")
+            c.privmsg(e.source(), "Channel: " + chname)
+            users = chobj.users()
+            users.sort()
+            c.privmsg(e.source(), "Users: " + ", ".join(users))
+            opers = chobj.opers()
+            opers.sort()
+            c.privmsg(e.source(), "Opers: " + ", ".join(opers))
+            voiced = chobj.voiced()
+            voiced.sort()
+            c.privmsg(e.source(), "Voiced: " + ", ".join(voiced))
     
     def exorcism(self,c,e,*n):
         """
