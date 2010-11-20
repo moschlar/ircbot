@@ -72,6 +72,11 @@ class TestBot(SingleServerIRCBot):
             #print("Whoopie, someones talking to me....")
             c.privmsg(e.target(),"Wat is los?")
         
+        if a.startswith("calc "):
+            import urllib
+            eq = a.split(None,1)[1]
+            c.privmsg(e.target(),"I'm not that good at maths... Try it here: http://www.wolframalpha.com/input/?i=%s" % urllib.quote(eq))
+        
         # Did someone say something interesting?
         for (keyword,response) in self.responses.items():
             if irc_lower(a).find(irc_lower(keyword)) != -1:
