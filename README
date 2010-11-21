@@ -10,6 +10,13 @@ It has other useful and funny features like: Proxy speaking through the bot, an 
 
 It is written in Python using python-irclib <http://python-irclib.sourceforge.net/>
 
+Dependencies:
+-------------
+
+- Reading user structure depends on sqlalchemy which depends on MySQLdb
+  This dependency will be made optional somewhere in the future! 
+  Until then, either comment out everything related to those or install them.
+
 Known limitations:
 ------------------
 
