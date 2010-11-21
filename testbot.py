@@ -24,7 +24,7 @@ from irclib import nm_to_n, nm_to_h, irc_lower, ip_numstr_to_quad, ip_quad_to_nu
 
 class TestBot(SingleServerIRCBot):
     
-    def __init__(self, server, nickname, realname, channel_list):
+    def __init__(self, server, password, nickname, realname, channel_list):
         # Check if server:port or only server is given
         if server.rfind(":") == -1:
             port = 6667
@@ -33,6 +33,7 @@ class TestBot(SingleServerIRCBot):
             server = server.rsplit(":",1)[0]
         
         SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
+        self.password = password
         
         # Initialization of channels
         self.channel_list = channel_list
@@ -72,6 +73,10 @@ class TestBot(SingleServerIRCBot):
         
         Joining channels and saying Hello
         """
+        
+        if self.password:
+            c.oper(self.nickname,self.password)
+        
         for chan in self.channel_list:
             c.join(chan)
         if HELLO_MESSAGE:
@@ -307,13 +312,14 @@ def main():
     config = SafeConfigParser()
     config.read(CONFIG_FILE)
     
+    server = config.get("global", "server")
+    password = config.get("global","password")
     nickname = config.get("global", "nickname")
     realname = config.get("global", "realname")
-    server = config.get("global", "server")
     channel_list = config.get("global", "channel_list").split(",")
     print("I'm %s (%s) at %s in %s" %(nickname, realname, server, channel_list))
     
-    testbot = TestBot(server, nickname, realname, channel_list)
+    testbot = TestBot(server, password, nickname, realname, channel_list)
     testbot.start()
     
     return

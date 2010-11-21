@@ -1,5 +1,6 @@
 [global]
 server:         1.2.3.4:6667
+password:       
 # first entry is main channel, you can list many channels separated by ,
 channel_list:   #public
 nickname:       masterbot
