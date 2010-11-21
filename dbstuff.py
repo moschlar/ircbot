@@ -63,31 +63,49 @@ session = Session()
 
 def getLevel(channel,hostname):
     level = "n"
-    print channel
+    #print channel
     if channel.startswith("#"):
         channel = channel[1:]
-    print hostname
+    #print hostname
     ip = socket.gethostbyname(hostname)
-    print ip
+    #print ip
     q = session.query(irc.stat).filter(irc.user == ip).filter(irc.chan == channel).first()
-    print "q: %s"%q
+    #print "q: %s"%q
     
     if q:
         level = q[0]
     
     p = session.query(host.zdvuser).filter(host.ipv4 == ip).first()
-    print "p: %s"%p
+    #print "p: %s"%p
     
     if p:
         p = p[0]
         r = session.query(irc.stat).filter(irc.user == p).filter(irc.chan == channel).first()
-        print "r: %s"%r
+        #print "r: %s"%r
         if r:
             level = r[0]
     
     return level
 
+def getChannelLevels(channel):
+    
+    levels = {}
+    
+    #print channel
+    if channel.startswith("#"):
+        channel = channel[1:]
+        
+    q = session.query(irc.user,irc.stat).filter(irc.chan == channel).all()
+    #print q
+    
+    # Lets make a nice dictionary out of the tuples
+    for (user,mode) in q:
+        levels[user] = mode
+    
+    return levels
+
 if __name__ == "__main__":
-    print getLevel("#public","stewie.k3.wohnheim.uni-mainz.de")
-    print getLevel("#public","134.93.136.6")
-    print getLevel("#k3","134.93.136.6")
+    #print getLevel("#public","stewie.k3.wohnheim.uni-mainz.de")
+    #print getLevel("#public","134.93.136.6")
+    #print getLevel("#k3","134.93.136.6")
+    print getChannelLevels("#public")

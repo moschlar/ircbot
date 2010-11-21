@@ -22,6 +22,8 @@ import socket
 from ircbot import SingleServerIRCBot
 from irclib import nm_to_n, nm_to_h, irc_lower, ip_numstr_to_quad, ip_quad_to_numstr, is_channel
 
+import dbstuff
+
 class TestBot(SingleServerIRCBot):
     
     def __init__(self, server, password, nickname, realname, channel_list):
@@ -32,12 +34,14 @@ class TestBot(SingleServerIRCBot):
             port = int(server.rsplit(":",1)[-1])
             server = server.rsplit(":",1)[0]
         
+         # Initialization
         SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
         self.password = password
+        self.levels = {}
         
-        # Initialization of channels
         self.channel_list = channel_list
         self.main_channel = channel_list[0]
+        
         self.ghostwriters = []
         self.loadResponses()
     
@@ -59,7 +63,10 @@ class TestBot(SingleServerIRCBot):
         storage = file(RESPONSES_FILE, "rb")
         self.responses = pickle.load(storage)
         storage.close()
+        return
     
+    # Not sure what to do here... 
+    # Better restart the whole IRC server to get my name again! :D
     def on_nicknameinuse(self, c, e):
         """
         Callback function on logging in with already used nickname
@@ -71,6 +78,7 @@ class TestBot(SingleServerIRCBot):
         """
         Callback function on getting welcome message from server
         
+        Lets get oper rights!
         Joining channels and saying Hello
         """
         
@@ -215,23 +223,47 @@ class TestBot(SingleServerIRCBot):
                 self.saveResponses()
         return
     
+    # But here we should immediately check for the user's mode
     def on_join(self,c,e):
-        """Should not welcome himself..."""
-        src = nm_to_n(e.source())
-        print src
+        """
+        Handles the servers JOIN messages
+        
+        Here the bot eventually says Hello to a new user (not himself)
+        
+        And the bot queries the database for getting the highest mode for
+        the new user and applies it
+        """
+        nick = nm_to_n(e.source())
+        host = nm_to_h(e.source())
+        channel = e.target()
+        print nick
         print c.get_nickname()
-        if src != c.get_nickname:
-            c.privmsg(e.target(),"Hello %s" % src)
+        
+        if nick == c.get_nickname():
+            self.levels[channel] = dbstuff.getChannelLevels(channel)
+            print("levels: In %s we have %s" % (channel,self.levels[channel]))
+        else:
+            c.privmsg(channel,"Hello %s" % nick)
+            level = dbstuff.getLevel(channel,host)
+            print("level: %s on %s in %s has %s" % (nick, host, channel, level))
     
+    # We use the PING command as a hook to get the new who list from the server
+    # and to check whether all user's modes are set correctly
+    # Because whoreply gets called multiple times, we get the dictionary of
+    # modes from the database in this step and store it
     def on_ping(self,c,e):
-        for chan in self.channel_list:
-            c.who(chan)
+        
+        for channel in self.channel_list:
+            self.levels[channel] = dbstuff.getChannelLevels(channel)
+            print("levels: In %s we have %s" % (channel,self.levels[channel]))
+            c.who(channel)
     
+    # Now here needs to be checked if the rights are set correctly for each user
     def on_whoreply(self,c,e):
         """
         Handles the servers whoreplies
         
-        We do the check for user levels here.
+        We do the periodic check for for user modes here.
         
         e.source = <server>
         e.target = <nickname>
@@ -243,9 +275,12 @@ class TestBot(SingleServerIRCBot):
         host = e.arguments()[2]
         ip = socket.gethostbyname(host)
         
-        import dbstuff
-        
-        level = dbstuff.getLevel(channel,host)
+        #levels = dbstuff.getChannelLevels(channel)
+        if self.levels[channel].has_key(nick):
+            level = self.levels[channel][nick]
+        else:
+            level = "n"
+            #return
         
         print("whoreply with %s %s (%s) in %s has %s" % (nick, host, ip, channel, level))
     
