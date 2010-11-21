@@ -25,6 +25,7 @@ from irclib import nm_to_n, nm_to_h, irc_lower, ip_numstr_to_quad, ip_quad_to_nu
 class TestBot(SingleServerIRCBot):
     
     def __init__(self, server, nickname, realname, channel_list):
+        # Check if server:port or only server is given
         if server.rfind(":") == -1:
             port = 6667
         else:
@@ -32,6 +33,8 @@ class TestBot(SingleServerIRCBot):
             server = server.rsplit(":",1)[0]
         
         SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
+        
+        # Initialization of channels
         self.channel_list = channel_list
         self.main_channel = channel_list[0]
         self.ghostwriters = []
@@ -207,6 +210,14 @@ class TestBot(SingleServerIRCBot):
                 self.saveResponses()
         return
     
+    def on_join(self,c,e):
+        """Should not welcome himself..."""
+        src = nm_to_n(e.source())
+        print src
+        print c.get_nickname()
+        if src != c.get_nickname:
+            c.privmsg(e.target(),"Hello %s" % src)
+    
     def on_ping(self,c,e):
         for chan in self.channel_list:
             c.who(chan)
@@ -221,7 +232,7 @@ class TestBot(SingleServerIRCBot):
         e.target = <nickname>
         e.arguments = [channel, ~nickname, host, server, nickname, H*, 0 realname]
         """
-        print("WHOOOOOOOOOOOOOOOO")
+        
         channel = e.arguments()[0]
         nick = e.arguments()[4]
         host = e.arguments()[2]
