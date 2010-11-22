@@ -1,4 +1,9 @@
 # -*- coding: iso-8859-1 -*-      
+'''
+This is good ol' Larry, who did a good job for a long time
+But there comes the time, when things need to be changed...
+When the old ones have to retire and make room for the younger ones...
+'''
 import MySQLdb                                                                                                                  
 import sys                                                                                                                      
 import socket                                                                                                                   
