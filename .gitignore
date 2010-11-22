@@ -2,3 +2,5 @@
 *.cfg
 # Pickled data
 *.pkl
+# Compiled stuff of course
+*.pyc

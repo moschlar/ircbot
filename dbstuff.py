@@ -75,6 +75,8 @@ def getLevel(channel,hostname):
     if q:
         level = q[0]
     
+    # USE JOINS
+    
     p = session.query(host.zdvuser).filter(host.ipv4 == ip).first()
     #print "p: %s"%p
     

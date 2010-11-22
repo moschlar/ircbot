@@ -34,7 +34,7 @@ class TestBot(SingleServerIRCBot):
             port = int(server.rsplit(":",1)[-1])
             server = server.rsplit(":",1)[0]
         
-         # Initialization
+        # Initialization
         SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
         self.password = password
         self.levels = {}
