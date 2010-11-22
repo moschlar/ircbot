@@ -1,8 +1,9 @@
-'''
-Created on 20.11.2010
+"""
+Database abstraction layer for getting user modes in specified IRC channels
 
+@version: beta 0.1
 @author: moschlar
-'''
+"""
 
 CONFIG_FILE = "testbot.cfg"
 path_to_db = "sqlite:///:memory:"
@@ -17,6 +18,7 @@ user = config.get("database", "user")
 passwd = config.get("database", "passwd")
 db = config.get("database", "database")
 
+# Parsing usable information from CONFIG_FILE
 if db_engine == "mysql":
     path_to_db = "mysql://"
     if user:

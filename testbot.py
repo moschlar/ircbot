@@ -1,15 +1,13 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-#
-# Testing python-irclib as a bot
-#
-
-
-"""Testing python-irclib as a bot
+"""
+Testing python-irclib as a bot
 
 This is an example bot that uses the SingleServerIRCBot class from
 ircbot.py.
 
+@version: beta 0.1
+@author: moschlar
 """
 
 CONFIG_FILE = "testbot.cfg"
