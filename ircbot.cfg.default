@@ -7,9 +7,10 @@ nickname:       masterbot
 realname:       Master of the Universe
 
 [database]
+engine:     mysql
 server:     2.3.4.5
 user:       user
-passwd:     passwd
+password:   passwd
 database:   db
 
 [responses]
