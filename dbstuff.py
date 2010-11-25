@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """Database connection for getting IRC user levels in IRC channels.
 
 Uses sqlalchemy as database abstraction layer and the defined model here
