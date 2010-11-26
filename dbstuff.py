@@ -4,22 +4,29 @@
 
 Uses sqlalchemy as database abstraction layer and the defined model here
 
-@version: 0.1
+@version: 0.2
 @author: moschlar
 """
 
 DEBUG = 0
-CONFIG_FILE = "testbot.cfg"
+VERSION = "0.2"
+
+
+import sys
+from os.path import exists, splitext
+from ConfigParser import SafeConfigParser
 
 #-----------------------------------------------------------------------------------
 # Parsing Database Configuration
 #-----------------------------------------------------------------------------------
 
-from ConfigParser import SafeConfigParser
-config = SafeConfigParser()
-config.read(CONFIG_FILE)
 
-# Getting database information from CONFIG_FILE
+config_file = "testbot.cfg"
+
+config = SafeConfigParser()
+config.read(config_file)
+
+# Getting database information from config_file
 try:
     db_engine = config.get("database","engine")
     db_server = config.get("database", "server")
@@ -27,7 +34,7 @@ try:
     passwd = config.get("database", "password")
     db = config.get("database", "database")
 except:
-    raise Exception("Could not read database path from %s" % CONFIG_FILE)
+    raise Exception("Could not read database path from %s" % config_file)
 
 # Parsing database information to path-string
 try:
@@ -42,8 +49,7 @@ try:
 except:
     raise Exception("Could not parse path to database!")
 
-if DEBUG:
-    print path_to_db
+if DEBUG: print path_to_db
 
 #-----------------------------------------------------------------------------------
 
@@ -101,21 +107,20 @@ def getLevel(channel,hostname):
     """
     level = "n"
     
-    if DEBUG:
-        print channel
+    if DEBUG: print channel
     if channel.startswith("#"):
         channel = channel[1:]
-    if DEBUG:
-        print hostname
+    if DEBUG: print hostname
     
-    ip = socket.gethostbyname(hostname)
-    if DEBUG:
-        print ip
+    try:
+        ip = socket.gethostbyname(hostname)
+        if DEBUG: print ip
+    except:
+        return level
     
     q = session.query(irc.stat).filter(irc.user == ip).filter(irc.chan == channel).first()
     if q:
-        if DEBUG:
-            print "User level by ip address: %s" % q
+        if DEBUG: print "User level by ip address: %s" % q
         level = q[0]
     
 #    This SQL query shall be performed:
@@ -126,8 +131,7 @@ def getLevel(channel,hostname):
     
     p = session.query(irc.stat).join((host, irc.user == host.zdvuser)).filter(host.ipv4 == ip).filter(irc.chan == channel).first()
     if p:
-        if DEBUG:
-            print "User level by ZDV-Username: %s" % p
+        if DEBUG: print "User level by ZDV-Username: %s" % p
         level = p[0]
     
     return level
@@ -137,8 +141,11 @@ def getLevel(channel,hostname):
 #-----------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    print ("My level in #public: %c" % getLevel("#public","134.93.50.65"))
-    print ("My level in #spielplatz: %c" % getLevel("#spielplatz","134.93.50.65"))
-    #print getLevel("#public","stewie.k3.wohnheim.uni-mainz.de")
-    #print getLevel("#public","134.93.136.6")
-    #print getLevel("#k3","134.93.136.6")
+    if len(sys.argv) != 3:
+        print ("Usage: dbstuff.py #channel hostname")
+    else:
+        hostname = sys.argv[2]
+        channel = sys.argv[1]
+        level = getLevel(channel,hostname)
+        print ("%s has mode +%c in %s" % (hostname,level,channel))
+    
