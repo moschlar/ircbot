@@ -42,8 +42,7 @@ class TestBot(SingleServerIRCBot):
         
         # Parsing the configuration
         config_file = splitext(sys.argv[0])[0] + ".cfg"
-        if not exists(config_file):
-            raise
+        
         config = SafeConfigParser({'username': None, 'password': None, 'realname':'IRCBot','channel_list':'#public','max_ghosts':'10','hello_message':'Hi!'})
         config.read(config_file)
         
@@ -237,7 +236,7 @@ class TestBot(SingleServerIRCBot):
         
         level = dbstuff.getLevel(channel,host)
         
-        print("whoreply with %s %s (%s) in %s has %s" % (nick, host, ip, channel, level))
+        if DEBUG: print("whoreply with %s %s (%s) in %s has %s" % (nick, host, ip, channel, level))
         
         if (level == "v") or (level == "o"):
             c.mode(channel,"+%s %s" % (level,nick))
@@ -246,10 +245,10 @@ class TestBot(SingleServerIRCBot):
         """
         Prints out debugging information about the bots state and its channels
         """
-        # DebugMe can be used as manual hook to perform a WHO request
+        # debug_me is a manual hook to perform a WHO request
         for chan in self.channel_list:
             c.who(chan)
-        print("self.channels.items(): %s" % self.channels.items())
+        if DEBUG: print("self.channels.items(): %s" % self.channels.items())
         for chname, chobj in self.channels.items():
             print("chname: %s chobj: %s" % (chname, chobj))
             c.privmsg(e.source(), "--- Channel statistics ---")
@@ -297,7 +296,7 @@ class TestBot(SingleServerIRCBot):
         c.privmsg(chan,msg)
         return
     
-    
+
 def main():
     
     testbot = TestBot()
