@@ -1,19 +1,26 @@
-IRCBOT
+IRCBot
 ======
-(Larry-v2)
+("Shaun")
 
-This ircbot will become the versatile and verbose successor of "Larry The Cow", the housekeeper and master of the local IRC network at wohnheim.uni.mainz.de.
+This ircbot will become the versatile and verbose successor of "Larry The Cow",
+the housekeeper and master of the local IRC network at wohnheim.uni.mainz.de.
 
-It will implement user authentication using a database for storing user modes. Granting of +v mode will be calculated by an intelligent algorithm considering idle_time and other factors.
+It will implement user authentication using a database for storing user modes.
+Granting of +v mode will be calculated by an intelligent algorithm considering
+idle_time and other factors.
 
-It has other useful and funny features like: Proxy speaking through the bot, an exorcism mode to find out who said something through it, responding to specified keywords and the possibility to change keywords and reactions using IRC commands.
+It has other useful and funny features like: 
+- proxy speaking through the bot
+- an exorcism mode to find out who used proxy speaking
+- responding to specified keywords
+- and the possibility to change keywords and reactions
 
 It is written in Python using python-irclib <http://python-irclib.sourceforge.net/>
 
 Dependencies:
 -------------
 
-- Reading user structure depends on sqlalchemy which depends on MySQLdb
+- Getting user levels from database depends on sqlalchemy which depends on MySQLdb
   This dependency will be made optional somewhere in the future! 
   Until then, either comment out everything related to those or install them.
 

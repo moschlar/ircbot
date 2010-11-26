@@ -1,9 +1,11 @@
 To-Do-List:
 ===========
 
-- Use database storage for response dictionary (sqlite)
 - Use algorithm to determine voice mode
 - DoHouse
 - Implement truly object orientated design:
     Specific classes as ResponseHandler, PrivMsgCommandHandler, AdminHandler
     If some of those are not present, their function is not available, but the bot is still working!
+- CleanUp responder
+- Make class for dbstuff
+- CleanUp testbot (depends on the two before)
