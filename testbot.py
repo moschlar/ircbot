@@ -1,18 +1,31 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
+"""This is an IRC bot with powerful administration and entertainment functions.
+
+Configuration has to be in script_name.cfg (e.g. if this script is "testbot.py"
+configuration has to be in "testbot.cfg").
+
+This bot will try to become server operator, if username and password are specified.
+It can use a database to get the modes for users depending on their hostnames 
+and/or ip addresses.
+
+It has a say_by_proxy command that lets you make the bot say your words like it were his own;
+although he keeps track of those usages which you can see by do_exorcism.
+
+The bot can also respond to everything/something someone said in the channels. This responding
+options are outsourced to a Responder class, that gets imported (or not) and uses respond_to 
+to handle responses.
+
+This bot uses ircbot.py and irclib.py from python-irclib <http://python-irclib.sourceforge.net/>
+
+Author: Moritz Schlarb <mail@moritz-schlarb.de>
 """
-Testing python-irclib as a bot
 
-This is an example bot that uses the SingleServerIRCBot class from
-ircbot.py.
-
-@version: beta 0.1
-@author: moschlar
-"""
-
-CONFIG_FILE = "testbot.cfg"
-
+import sys
+from os.path import exists, splitext
 from socket import gethostbyname
+from urllib import quote
+#import logging # will use logging somewhere in the future...
 
 from ConfigParser import SafeConfigParser
 from ircbot import SingleServerIRCBot
@@ -20,22 +33,27 @@ from irclib import nm_to_n, nm_to_h, is_channel
 
 import dbstuff, responder
 
+DEBUG = 1
+VERSION = "0.2 beta"
+
 class TestBot(SingleServerIRCBot):
     
     def __init__(self):
         
-        # Parsing the bot's configuration
-        
-        config = SafeConfigParser()
-        config.read(CONFIG_FILE)
+        # Parsing the configuration
+        config_file = splitext(sys.argv[0])[0] + ".cfg"
+        if not exists(config_file):
+            raise
+        config = SafeConfigParser({'username': None, 'password': None, 'realname':'IRCBot','channel_list':'#public','max_ghosts':'10','hello_message':'Hi!'})
+        config.read(config_file)
         
         server = config.get("global", "server")
-        login = config.get("global","login")
+        username = config.get("global","username")
         password = config.get("global","password")
         nickname = config.get("global", "nickname")
         realname = config.get("global", "realname")
         channel_list = config.get("global", "channel_list").split(",")
-        print("I'm %s (%s) at %s in %s" %(nickname, realname, server, channel_list))
+        if DEBUG: print("I'm %s (%s) at %s in %s" %(nickname, realname, server, channel_list))
         
         self.max_ghosts = config.get("global","maximum ghosts")
         self.hello_message = config.get("global","hello message")
@@ -49,9 +67,8 @@ class TestBot(SingleServerIRCBot):
         
         # Initialization
         SingleServerIRCBot.__init__(self, [(server, port)], nickname, realname)
-        self.login = login
+        self.username = username
         self.password = password
-        self.levels = {}
         
         self.channel_list = channel_list
         self.main_channel = channel_list[0]
@@ -68,7 +85,7 @@ class TestBot(SingleServerIRCBot):
         e.arguments() = [nickname, message]
         """
         
-        print("What the hell is going on here? Who is claiming my name???")
+        if DEBUG: print("What the hell is going on here? Who is claiming my name???")
         c.send_raw("KILL %s :Klau nicht meinen Nick" % e.arguments()[0])
         c.nick(e.arguments()[0])
     
@@ -76,53 +93,55 @@ class TestBot(SingleServerIRCBot):
         """
         Callback function on getting welcome message from server
         
-        Lets get oper rights!
-        Joining channels and saying Hello
+        If username and password were given we authenticate here and get op rights
+        Joining configured channels
         """
         
-        if self.login and self.password:
-            c.oper(self.login,self.password)
+        if self.username and self.password:
+            c.oper(self.username,self.password)
         
         for chan in self.channel_list:
             c.join(chan)
+            # WHO request initiates user level checking
             c.who(chan)
-        if self.hello_message:
-            c.privmsg(self.main_channel, self.hello_message)
+            if self.hello_message:
+                c.privmsg(chan, self.hello_message)
     
     def on_pubmsg(self, c, e):
         """
         Callback function for public messages.
         """
-        a = e.arguments()[0]
+        # Just to make the next functions easier
+        line = e.arguments()[0]
         
         # Did someone mention my name?
-        if a.lower().find(self.connection.get_nickname().lower()) != -1:
-            #print("Whoopie, someones talking to me....")
-            c.privmsg(e.target(),"Wat is los?")
+        if line.lower().find(self.connection.get_nickname().lower()) != -1:
+            if DEBUG: print("Whoopie, someone said my name!!!")
+            c.privmsg(e.target(),"Wie kann ich dienen?")
         
-        if a.lower().startswith("calc "):
-            self.doMath(c, e, a.split(None,1)[1])
-            
+        # Shall I do some maths?
+        if line.lower().startswith("calc "):
+            self.do_math(c, e, line.split(None,1)[1])
+        
         # Did someone say something interesting to respond to?
-        self.responder.respondTo(c, e, a)
+        self.responder.respond_to(c, e, line)
         return
     
     def on_privmsg(self, c, e):
         """
         Callback function for private messages
         """
-        a = e.arguments()[0]
         
-        cmd = a.split()
+        line = e.arguments()[0]
+        cmd = line.split()
         
-        # Now what to do?
         if cmd[0].lower() == "debugme":
-            self.debugMe(c,e)
+            self.debug_me(c,e)
             
         elif cmd[0].lower() == "update":
             for chan in self.channel_list:
                 c.who(chan)
-                
+            
         elif cmd[0].lower() == "help":
             c.privmsg(e.source(),"Help is on its way!")
             self.help(c,e)
@@ -130,48 +149,50 @@ class TestBot(SingleServerIRCBot):
         elif cmd[0].lower() == "exorcism":
             try:
                 n = int(cmd[1])
-                self.exorcism(c, e, n)
+                self.do_exorcism(c, e, n)
             except:
-                self.exorcism(c, e)
+                self.do_exorcism(c, e)
             
         elif (cmd[0].lower() == "say") and (len(cmd) > 1):
-            self.sayByProxy(c, e, a.split(None,1)[-1])
+            self.say_by_proxy(c, e, line.split(None,1)[-1])
             
         elif (cmd[0].lower() == "response") and (len(cmd) > 1):
-            self.responder.doCommand(c,e,a.split(None,1)[-1])
-            #self.response(c, e, a.split(None,1)[-1])
+            self.responder.do_command(c,e,line.split(None,1)[-1])
+            
         return
     
-    def doMath(self,c,e,expr):
-        import urllib
-        url = "http://www.wolframalpha.com/input/?i=%s" % urllib.quote(expr)
+    def do_math(self,c,e,expr):
+        """
+        Just generate a link to Wolfram Alpha containing the given expression
+        """
+        url = "http://www.wolframalpha.com/input/?i=%s" % quote(expr)
         c.privmsg(e.target(),"I'm not that good at maths... Try it here: %s" % url)
         return
     
     def help(self,c,e):
         """
         Display help message
+        
+        Shall be generated dynamically by checking all the functions somewhere in the future...
         """
-        c.privmsg(e.source(),"IRCBot Version 0.1 alpha")
+        c.privmsg(e.source(),"IRCBot Version %s" % VERSION)
         c.privmsg(e.source(),"Commands:")
         c.privmsg(e.source(),"(<> indicate parameters, [] are optional parameters, * commands require op rights)")
         c.privmsg(e.source(),"help: Displays this help text")
         c.privmsg(e.source(),"update: Update user modes from database now")
         c.privmsg(e.source(),"say [channel] <something>: Makes the bot say <something> in channel or its main channel %s" % self.main_channel)
-        c.privmsg(e.source(),"exorcism [n]: Displays the last n (or max_ghosts=%d) invokations of \"say\"" % self.max_ghosts)
+        c.privmsg(e.source(),"do_exorcism [n]: Displays the last n (or max_ghosts=%d) invokations of \"say\"" % self.max_ghosts)
         c.privmsg(e.source(),"response list: Lists all available response keywords")
         c.privmsg(e.source(),"response set <keyword> <response>: Sets the response for <keyword> to <response> (overwrites already set keywords)")
         c.privmsg(e.source(),"*response del <keyword>: Deletes response entry for <keyword>")
         c.privmsg(e.source(),"*response init: Re-initializes the response dictionary with default values from config file")
         return
     
-    
-    # But here we should immediately check for the user's mode
     def on_join(self,c,e):
         """
         Handles the servers JOIN messages
         
-        Here the bot eventually says Hello to a new user (not himself)
+        Here the bot eventually welcomes a new user (but not to himself)
         
         And the bot queries the database for getting the highest mode for
         the new user and applies it
@@ -179,13 +200,12 @@ class TestBot(SingleServerIRCBot):
         nick = nm_to_n(e.source())
         host = nm_to_h(e.source())
         channel = e.target()
-        print nick
-        print c.get_nickname()
+        if DEBUG: print nick + " joined"
         
         if nick != c.get_nickname():
             c.privmsg(channel,"Hello %s" % nick)
             level = dbstuff.getLevel(channel,host)
-            print("level: %s on %s in %s has %s" % (nick, host, channel, level))
+            if DEBUG: print("level: %s on %s in %s has %s" % (nick, host, channel, level))
             if (level == "v") or (level == "o"):
                 c.mode(channel,"+%s %s" % (level,nick))
     
@@ -222,7 +242,7 @@ class TestBot(SingleServerIRCBot):
         if (level == "v") or (level == "o"):
             c.mode(channel,"+%s %s" % (level,nick))
     
-    def debugMe(self,c,e):
+    def debug_me(self,c,e):
         """
         Prints out debugging information about the bots state and its channels
         """
@@ -244,9 +264,9 @@ class TestBot(SingleServerIRCBot):
             voiced.sort()
             c.privmsg(e.source(), "Voiced: " + ", ".join(voiced))
     
-    def exorcism(self,c,e,*n):
+    def do_exorcism(self,c,e,*n):
         """
-        Writes a list of the history of ghostwriters that used sayByProxy
+        Writes a list of the history of ghostwriters that used say_by_proxy
         """
         if (not n) or (n[0] > len(self.ghostwriters)):
             n = len(self.ghostwriters)
@@ -257,7 +277,7 @@ class TestBot(SingleServerIRCBot):
             c.privmsg(e.source(),"%s said %s" % (who,what))
         return
     
-    def sayByProxy(self,c,e,msg):
+    def say_by_proxy(self,c,e,msg):
         """
         Makes the bot say something as it were his own words
         
