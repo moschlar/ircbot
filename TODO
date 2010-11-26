@@ -1,6 +1,7 @@
 To-Do-List:
 ===========
 
+- Join ALL channels (when someone else is in there) and leave, when bot alone is there
 - Use algorithm to determine voice mode
 - DoHouse
 - Implement truly object orientated design:
