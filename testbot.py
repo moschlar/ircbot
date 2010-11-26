@@ -54,7 +54,7 @@ class TestBot(SingleServerIRCBot):
         channel_list = config.get("global", "channel_list").split(",")
         if DEBUG: print("I'm %s (%s) at %s in %s" %(nickname, realname, server, channel_list))
         
-        self.max_ghosts = config.get("global","maximum ghosts")
+        self.max_ghosts = int(config.get("global","maximum ghosts"))
         self.hello_message = config.get("global","hello message")
         
         # Check if server:port or only server is given
