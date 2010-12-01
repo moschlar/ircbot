@@ -48,11 +48,11 @@ class Responder(object):
         storage.close()
         return
     
-    def respond_to(self,c,e,line):
+    def respond_to(self,line):
         for (keyword,response) in self.responses.items():
             if line.lower().find(keyword.lower()) != -1:
                 print("Found %s" % keyword)
-                c.privmsg(e.target(), response)
+                return response
         
     
     def do_command(self,c,e,a):

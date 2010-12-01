@@ -116,14 +116,22 @@ class TestBot(SingleServerIRCBot):
         # Did someone mention my name?
         if line.lower().find(self.connection.get_nickname().lower()) != -1:
             if DEBUG: print("Whoopie, someone said my name!!!")
-            c.privmsg(e.target(),"Wie kann ich dienen?")
+            
+            # Shall I do some maths?
+            if line.split(None,1)[-1].lower().startswith("calc "):
+                msg = self.do_math(line.split(None,2)[-1])
+                
+            # Did someone say something interesting to respond to?
+            else:
+                msg = self.responder.respond_to(line)
+            
+            if msg:
+                c.privmsg(e.target(),msg)
+            else:
+                #msg = "Wie kann ich dienen?"
+                #c.privmsg(e.target(),msg)
+                pass
         
-        # Shall I do some maths?
-        if line.lower().startswith("calc "):
-            self.do_math(c, e, line.split(None,1)[1])
-        
-        # Did someone say something interesting to respond to?
-        self.responder.respond_to(c, e, line)
         return
     
     def on_privmsg(self, c, e):
@@ -160,13 +168,13 @@ class TestBot(SingleServerIRCBot):
             
         return
     
-    def do_math(self,c,e,expr):
+    def do_math(self,expr):
         """
         Just generate a link to Wolfram Alpha containing the given expression
         """
         url = "http://www.wolframalpha.com/input/?i=%s" % quote(expr)
-        c.privmsg(e.target(),"I'm not that good at maths... Try it here: %s" % url)
-        return
+        
+        return "I'm not that good at maths... Try it here: %s" % url
     
     def help(self,c,e):
         """
@@ -202,7 +210,7 @@ class TestBot(SingleServerIRCBot):
         if DEBUG: print nick + " joined"
         
         if nick != c.get_nickname():
-            c.privmsg(channel,"Hello %s" % nick)
+            #c.privmsg(channel,"Hello %s" % nick)
             level = dbstuff.getLevel(channel,host)
             if DEBUG: print("level: %s on %s in %s has %s" % (nick, host, channel, level))
             if (level == "v") or (level == "o"):
