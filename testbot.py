@@ -25,6 +25,7 @@ import sys
 from os.path import exists, splitext
 from socket import gethostbyname
 from urllib import quote
+from time import sleep
 #import logging # will use logging somewhere in the future...
 
 from ConfigParser import SafeConfigParser
@@ -43,7 +44,7 @@ class TestBot(SingleServerIRCBot):
         # Parsing the configuration
         config_file = splitext(sys.argv[0])[0] + ".cfg"
         
-        config = SafeConfigParser({'username': None, 'password': None, 'realname':'IRCBot','channel_list':'#public','max_ghosts':'10','hello_message':'Hi!'})
+        config = SafeConfigParser({'username': None, 'password': None, 'realname':'IRCBot','channel_list':'#public','max_ghosts':'10','hello_message':''})
         config.read(config_file)
         
         server = config.get("global", "server")
@@ -98,13 +99,23 @@ class TestBot(SingleServerIRCBot):
         
         if self.username and self.password:
             c.oper(self.username,self.password)
+        
+    
+    def on_endofmotd(self,c,e):
+        
+        c.join(self.main_channel)
+        sleep(1)
+        c.who(self.main_channel)
+        sleep(1)
+        if self.hello_message:
+            c.privmsg(self.main_channel, self.hello_message)
+        
         c.list()
-        for chan in self.channel_list:
-            c.join(chan)
-            # WHO request initiates user level checking
-            c.who(chan)
-            if self.hello_message:
-                c.privmsg(chan, self.hello_message)
+        
+        for channel in self.channel_list:
+            c.join(channel)
+            c.who(channel)
+            sleep(1)
     
     def on_pubmsg(self, c, e):
         """
@@ -235,6 +246,9 @@ class TestBot(SingleServerIRCBot):
         
         if DEBUG: print channel
         
+        if not channel in self.channel_list:
+            self.channel_list.append(channel)
+            
         c.join(channel)
         #c.part(channel)
         
@@ -268,11 +282,14 @@ class TestBot(SingleServerIRCBot):
         """
         # debug_me is a manual hook to perform a WHO request
         c.list()
+        sleep(1)
         for chan in self.channel_list:
             c.who(chan)
+            sleep(1)
+        
         if DEBUG: print("self.channels.items(): %s" % self.channels.items())
         for chname, chobj in self.channels.items():
-            print("chname: %s chobj: %s" % (chname, chobj))
+            if DEBUG: print("chname: %s chobj: %s" % (chname, chobj))
             c.privmsg(e.source(), "--- Channel statistics ---")
             c.privmsg(e.source(), "Channel: " + chname)
             users = chobj.users()
