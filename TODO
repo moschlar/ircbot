@@ -11,6 +11,7 @@ To-Do-List:
 - Start-Stopp-Skript, Daemon
 - More response features
 - Noodle-connector
+- Catch Keyboard-Interrupt and say goodbye!
 - News function (e.g. one can tell the bot that a new file on a share is available and he will offer this information to every user)
 - Implement truly object orientated design:
     Specific classes as ResponseHandler, PrivMsgCommandHandler, AdminHandler
