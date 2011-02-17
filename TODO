@@ -1,12 +1,21 @@
 To-Do-List:
 ===========
 
+- More exception handling
 - Join ALL channels (when someone else is in there) and leave, when bot alone is there
+- Determine new users and offer basic help to them
 - Use algorithm to determine voice mode
-- DoHouse
+- House-mode like Larry
+- Cowsay
+- Rickroll-mode
+- Start-Stopp-Skript, Daemon
+- More response features
+- Noodle-connector
+- News function (e.g. one can tell the bot that a new file on a share is available and he will offer this information to every user)
 - Implement truly object orientated design:
     Specific classes as ResponseHandler, PrivMsgCommandHandler, AdminHandler
     If some of those are not present, their function is not available, but the bot is still working!
 - CleanUp responder
 - Make class for dbstuff
 - CleanUp testbot (depends on the two before)
+
