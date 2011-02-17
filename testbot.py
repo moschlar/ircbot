@@ -267,7 +267,10 @@ class TestBot(SingleServerIRCBot):
         channel = e.arguments()[0]
         nick = e.arguments()[4]
         host = e.arguments()[2]
-        ip = gethostbyname(host)
+        try:
+            ip = gethostbyname(host)
+        except:
+            return
         
         level = dbstuff.getLevel(channel,host)
         
