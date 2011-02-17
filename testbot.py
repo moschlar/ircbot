@@ -98,7 +98,7 @@ class TestBot(SingleServerIRCBot):
         
         if self.username and self.password:
             c.oper(self.username,self.password)
-        
+        c.list()
         for chan in self.channel_list:
             c.join(chan)
             # WHO request initiates user level checking
@@ -222,9 +222,22 @@ class TestBot(SingleServerIRCBot):
     # modes from the database in this step and store it
     def on_ping(self,c,e):
         
+        c.list()
         for channel in self.channel_list:
             c.who(channel)
     
+    def on_list(self,c,e):
+        """
+        e.arguments() = [channel, users, topic]
+        """
+        
+        (channel, users, topic) = e.arguments()
+        
+        if DEBUG: print channel
+        
+        c.join(channel)
+        #c.part(channel)
+        
     # Now here needs to be checked if the rights are set correctly for each user
     def on_whoreply(self,c,e):
         """
@@ -254,6 +267,7 @@ class TestBot(SingleServerIRCBot):
         Prints out debugging information about the bots state and its channels
         """
         # debug_me is a manual hook to perform a WHO request
+        c.list()
         for chan in self.channel_list:
             c.who(chan)
         if DEBUG: print("self.channels.items(): %s" % self.channels.items())
