@@ -71,7 +71,7 @@ class irc(Base):
     
     id = Column(Integer, primary_key=True)
     chan = Column(String)
-    user = Column(String)
+    user = Column(String, ForeignKey('host.zdvuser'))
     stat = Column(String)
     
 class host(Base):
@@ -129,7 +129,7 @@ def getLevel(channel,hostname):
 #    LEFT JOIN `host` ON irc.`user` = host.`zdvuser`
 #    WHERE host.`ipv4` = 'ip' AND irc.`chan` = 'channel'
     
-    p = session.query(irc.stat).join((host, irc.user == host.zdvuser)).filter(host.ipv4 == ip).filter(irc.chan == channel).first()
+    p = session.query(irc.stat).join(host).filter(host.ipv4 == ip).filter(irc.chan == channel).first()
     if p:
         if DEBUG: print "User level by ZDV-Username: %s" % p
         level = p[0]
