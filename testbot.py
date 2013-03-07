@@ -87,6 +87,7 @@ class TestBot(SingleServerIRCBot):
         
         if DEBUG: print("What the hell is going on here? Who is claiming my name???")
         c.send_raw("KILL %s :Klau nicht meinen Nick" % e.arguments()[0])
+        sleep(1)
         c.nick(e.arguments()[0])
     
     def on_welcome(self, c, e):
@@ -104,9 +105,9 @@ class TestBot(SingleServerIRCBot):
     def on_endofmotd(self,c,e):
         
         c.join(self.main_channel)
-        sleep(1)
+        sleep(.1)
         c.who(self.main_channel)
-        sleep(1)
+        sleep(.1)
         if self.hello_message:
             c.privmsg(self.main_channel, self.hello_message)
         
@@ -115,7 +116,7 @@ class TestBot(SingleServerIRCBot):
         for channel in self.channel_list:
             c.join(channel)
             c.who(channel)
-            sleep(1)
+            sleep(.1)
     
     def on_pubmsg(self, c, e):
         """
@@ -285,10 +286,10 @@ class TestBot(SingleServerIRCBot):
         """
         # debug_me is a manual hook to perform a WHO request
         c.list()
-        sleep(1)
+        sleep(.1)
         for chan in self.channel_list:
             c.who(chan)
-            sleep(1)
+            sleep(.1)
         
         if DEBUG: print("self.channels.items(): %s" % self.channels.items())
         for chname, chobj in self.channels.items():
