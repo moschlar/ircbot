@@ -101,12 +101,11 @@ class TestBot(SingleServerIRCBot):
         if self.username and self.password:
             c.oper(self.username,self.password)
         for channel in self.channel_list:
-            c.mode(channel,"+%s %s" % ('o', self._nickname))
+            c.mode(channel,"+%s %s" % ('o', self.connection.get_nickname()))
     
     def on_endofmotd(self,c,e):
         
         c.join(self.main_channel)
-        sleep(.1)
         c.who(self.main_channel)
         sleep(.1)
         if self.hello_message:
@@ -117,6 +116,7 @@ class TestBot(SingleServerIRCBot):
         for channel in self.channel_list:
             c.join(channel)
             c.who(channel)
+            c.mode(channel,"+%s %s" % ('o', self.connection.get_nickname()))
             sleep(.1)
     
     def on_pubmsg(self, c, e):
