@@ -100,7 +100,8 @@ class TestBot(SingleServerIRCBot):
         
         if self.username and self.password:
             c.oper(self.username,self.password)
-        
+        for channel in self.channel_list:
+            c.mode(channel,"+%s %s" % ('o', self._nickname))
     
     def on_endofmotd(self,c,e):
         
@@ -272,8 +273,11 @@ class TestBot(SingleServerIRCBot):
             ip = gethostbyname(host)
         except:
             return
-        
-        level = dbstuff.getLevel(channel,host)
+
+        if nick == e.target():
+            level = "o"
+        else:
+            level = dbstuff.getLevel(channel,host)
         
         if DEBUG: print("whoreply with %s %s (%s) in %s has %s" % (nick, host, ip, channel, level))
         
